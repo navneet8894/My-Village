@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "MY VILLAGE",
+    "slug": "my-village",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "villageapp",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.village.management"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#059669"
+      },
+      "package": "com.village.management"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:5000"
+    }
+  }
+}

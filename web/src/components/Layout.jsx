@@ -1,0 +1,98 @@
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../features/auth/authSlice';
+import { toggleTheme } from '../features/theme/themeSlice';
+
+const linkClass = ({ isActive }) =>
+  `rounded-lg px-3 py-2 text-sm font-medium transition ${
+    isActive
+      ? 'bg-brand-600 text-white'
+      : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800'
+  }`;
+
+export default function Layout() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((s) => s.auth.user);
+  const dark = useSelector((s) => s.theme.dark);
+
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <aside className="md:w-56 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur md:min-h-screen p-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-semibold text-brand-700 dark:text-brand-400">MY VILLAGE</div>
+          <button
+            type="button"
+            onClick={() => dispatch(toggleTheme())}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 text-xs"
+            aria-label="Toggle theme"
+          >
+            {dark ? 'Light' : 'Dark'}
+          </button>
+        </div>
+        <nav className="flex md:flex-col flex-wrap gap-1">
+          {user?.role === 'admin' ? (
+            <>
+              <NavLink to="/dashboard/admin" end className={linkClass}>
+                Admin dashboard
+              </NavLink>
+              <NavLink to="/dashboard/admin/users" className={linkClass}>
+                All users
+              </NavLink>
+              <NavLink to="/dashboard/admin/villages" className={linkClass}>
+                All villages
+              </NavLink>
+              <NavLink to="/dashboard/admin/events" className={linkClass}>
+                Manage events
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/dashboard" end className={linkClass}>
+                Home
+              </NavLink>
+              <NavLink to="/dashboard/family" className={linkClass}>
+                Family
+              </NavLink>
+              <NavLink to="/dashboard/map" className={linkClass}>
+                Map
+              </NavLink>
+              <NavLink to="/dashboard/events" className={linkClass}>
+                Events
+              </NavLink>
+              <NavLink to="/dashboard/news" className={linkClass}>
+                News
+              </NavLink>
+              <NavLink to="/dashboard/invitations" className={linkClass}>
+                Invitations
+              </NavLink>
+              <NavLink to="/dashboard/notifications" className={linkClass}>
+                Alerts
+              </NavLink>
+            </>
+          )}
+          <NavLink to="/dashboard/profile" className={linkClass}>
+            Profile
+          </NavLink>
+        </nav>
+        <div className="mt-auto text-xs text-slate-500">
+          <div className="font-medium text-slate-700 dark:text-slate-200">{user?.name}</div>
+          <div className="text-slate-400 capitalize">{user?.role}</div>
+          <button
+            type="button"
+            className="mt-2 text-red-600 hover:underline"
+            onClick={() => {
+              dispatch(logout());
+              navigate('/');
+            }}
+          >
+            Log out
+          </button>
+        </div>
+      </aside>
+      <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
