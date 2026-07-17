@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import Toast from '../utils/toast';
 import { useLoginMutation } from '../app/apiSlice';
 import { setCredentials } from '../features/auth/authSlice';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,15 +26,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800 p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sign in</h1>
-        <p className="text-sm text-slate-500 mt-1">MY VILLAGE</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary-muted via-surface to-soft">
+      <ThemeToggle className="absolute right-4 top-4" />
+      <div className="w-full max-w-md rounded-2xl bg-card shadow-xl border border-line p-8">
+        <h1 className="text-2xl font-bold text-text">Sign in</h1>
+        <p className="text-sm text-text-subtle mt-1">MY VILLAGE</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2"
+              className="theme-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -43,7 +45,7 @@ export default function LoginPage() {
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <input
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2"
+              className="theme-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -53,19 +55,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 disabled:opacity-60"
+            className="w-full rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast font-medium py-2.5 disabled:opacity-60"
           >
             {isLoading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        <p className="mt-4 text-sm text-center text-slate-500">
+        <p className="mt-4 text-sm text-center text-text-subtle">
           No account?{' '}
-          <Link to="/register" className="text-brand-600 font-medium hover:underline">
+          <Link to="/register" className="theme-link">
             Register
           </Link>
         </p>
         <p className="mt-2 text-sm text-center">
-          <Link to="/" className="text-slate-400 hover:text-brand-600 transition">
+          <Link to="/" className="text-text-subtle hover:text-primary transition">
             ← Back to home
           </Link>
         </p>

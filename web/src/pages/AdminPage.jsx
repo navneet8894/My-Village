@@ -11,15 +11,15 @@ import {
 
 function StatCard({ label, value, icon }) {
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+    <div className="rounded-xl border border-line bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="text-sm text-text-subtle">{label}</p>
+          <p className="mt-1 text-3xl font-bold text-text">
             {value ?? '—'}
           </p>
         </div>
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 text-lg">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary text-lg">
           {icon}
         </span>
       </div>
@@ -42,7 +42,7 @@ export default function AdminPage() {
     <div className="space-y-10">
       <div>
         <h1 className="text-2xl font-bold">Admin dashboard</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        <p className="text-text-subtle text-sm mt-1">
           Overview and management for MY VILLAGE
         </p>
       </div>
@@ -54,34 +54,34 @@ export default function AdminPage() {
         <StatCard label="Total posts" value={stats?.postCount} icon="📰" />
       </div>
 
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-semibold text-lg">Village management</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-text-subtle mt-1">
               View all villages, their users, posts, and events
             </p>
           </div>
           <Link
             to="/dashboard/admin/villages"
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 text-sm font-medium transition"
+            className="rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast px-4 py-2 text-sm font-medium transition"
           >
             View all villages
           </Link>
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-semibold text-lg">User management</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-text-subtle mt-1">
               View all registered users and their full details
             </p>
           </div>
           <Link
             to="/dashboard/admin/users"
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 text-sm font-medium transition"
+            className="rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast px-4 py-2 text-sm font-medium transition"
           >
             View all users
           </Link>
@@ -105,20 +105,20 @@ export default function AdminPage() {
           }}
         >
           <input
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700"
+            className="theme-input"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
           <textarea
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700"
+            className="theme-input"
             placeholder="Body"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             required
           />
-          <button type="submit" className="rounded-lg bg-brand-600 text-white px-4 py-2">
+          <button type="submit" className="rounded-lg bg-primary text-primary-contrast px-4 py-2">
             Broadcast
           </button>
         </form>
@@ -141,20 +141,20 @@ export default function AdminPage() {
           }}
         >
           <input
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700"
+            className="theme-input"
             placeholder="Title"
             value={emTitle}
             onChange={(e) => setEmTitle(e.target.value)}
             required
           />
           <textarea
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700"
+            className="theme-input"
             placeholder="Message"
             value={emBody}
             onChange={(e) => setEmBody(e.target.value)}
             required
           />
-          <button type="submit" className="rounded-lg bg-red-600 text-white px-4 py-2">
+          <button type="submit" className="rounded-lg bg-danger text-primary-contrast px-4 py-2">
             Send emergency
           </button>
         </form>
@@ -166,12 +166,12 @@ export default function AdminPage() {
           {(news || []).map((n) => (
             <li
               key={n._id}
-              className="flex justify-between items-center border rounded px-3 py-2 text-sm dark:border-slate-800"
+              className="flex justify-between items-center border border-line rounded px-3 py-2 text-sm"
             >
               <span className="truncate max-w-md">{n.text || n.mediaUrl || n.kind}</span>
               <button
                 type="button"
-                className="text-red-600 shrink-0"
+                className="text-danger shrink-0"
                 onClick={async () => {
                   await delNews(n._id).unwrap();
                   refetchNews();

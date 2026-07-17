@@ -38,61 +38,61 @@ const appHighlights = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen flex flex-col bg-app">
       <LandingHeader />
 
       <main className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-muted via-surface to-soft" />
           <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="inline-block rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-semibold px-3 py-1 mb-4">
+              <span className="inline-block rounded-full bg-primary-soft text-primary-text text-xs font-semibold px-3 py-1 mb-4">
                 Welcome to MY VILLAGE
               </span>
-              <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-4xl sm:text-5xl font-bold text-text leading-tight">
                 Your village, connected in one place
               </h1>
-              <p className="mt-5 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="mt-5 text-lg text-text-muted leading-relaxed">
                 MY VILLAGE helps communities stay informed — manage families, share news, plan events,
                 send invitations, and receive alerts on web and mobile.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   to="/register"
-                  className="rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 font-medium shadow-md transition"
+                  className="rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast px-6 py-3 font-medium shadow-md transition"
                 >
                   Get started free
                 </Link>
                 <Link
                   to="/login"
-                  className="rounded-lg border border-slate-300 dark:border-slate-700 px-6 py-3 font-medium hover:bg-white dark:hover:bg-slate-900 transition"
+                  className="rounded-lg border border-line px-6 py-3 font-medium text-text hover:bg-surface transition"
                 >
                   Log in
                 </Link>
               </div>
             </div>
             <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-line">
                 <img
                   src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop"
                   alt="Village community"
                   className="w-full h-72 sm:h-96 object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -left-4 rounded-xl bg-white dark:bg-slate-900 shadow-lg border border-slate-200 dark:border-slate-800 p-4 hidden sm:block">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Community first</p>
-                <p className="text-xs text-slate-500 mt-1">Events · News · Family · Map</p>
+              <div className="absolute -bottom-4 -left-4 rounded-xl bg-card shadow-lg border border-line p-4 hidden sm:block">
+                <p className="text-sm font-semibold text-text">Community first</p>
+                <p className="text-xs text-text-subtle mt-1">Events · News · Family · Map</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* About */}
-        <section id="about" className="py-16 lg:py-20 bg-white dark:bg-slate-900">
+        <section id="about" className="py-16 lg:py-20 bg-surface">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">About MY VILLAGE</h2>
-            <p className="mt-4 max-w-2xl mx-auto text-slate-600 dark:text-slate-400 leading-relaxed">
+            <h2 className="text-3xl font-bold text-text">About MY VILLAGE</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-text-muted leading-relaxed">
               Whether you are a villager keeping up with local news or an admin managing the
               community, MY VILLAGE gives you the tools to stay connected. Role-based access ensures
               admins can oversee users and content while members enjoy a simple, friendly experience.
@@ -104,10 +104,10 @@ export default function LandingPage() {
         <section id="features" className="py-16 lg:py-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+              <h2 className="text-3xl font-bold text-text">
                 Everything your village needs
               </h2>
-              <p className="mt-3 text-slate-600 dark:text-slate-400">
+              <p className="mt-3 text-text-muted">
                 Powerful features for everyday community life
               </p>
             </div>
@@ -115,14 +115,14 @@ export default function LandingPage() {
               {features.map((f) => (
                 <article
                   key={f.title}
-                  className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition"
+                  className="rounded-2xl overflow-hidden border border-line bg-card shadow-sm hover:shadow-md transition"
                 >
                   <img src={f.image} alt={f.title} className="w-full h-48 object-cover" />
                   <div className="p-5">
-                    <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
+                    <h3 className="font-semibold text-lg text-text">
                       {f.title}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{f.desc}</p>
+                    <p className="mt-2 text-sm text-text-muted">{f.desc}</p>
                   </div>
                 </article>
               ))}
@@ -131,21 +131,21 @@ export default function LandingPage() {
         </section>
 
         {/* Mobile App */}
-        <section id="app" className="py-16 lg:py-20 bg-white dark:bg-slate-900">
+        <section id="app" className="py-16 lg:py-20 bg-surface">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
-              <span className="text-brand-600 font-semibold text-sm">MY VILLAGE App</span>
-              <h2 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+              <span className="text-primary font-semibold text-sm">MY VILLAGE App</span>
+              <h2 className="mt-2 text-3xl font-bold text-text">
                 Take your village with you
               </h2>
-              <p className="mt-4 text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="mt-4 text-text-muted leading-relaxed">
                 The MY VILLAGE mobile app mirrors the website experience — browse events, read news,
                 view the village map, and get push notifications wherever you are.
               </p>
               <ul className="mt-6 space-y-3">
                 {appHighlights.map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 text-xs font-bold">
+                  <li key={item} className="flex items-center gap-3 text-sm text-text-muted">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary text-xs font-bold">
                       ✓
                     </span>
                     {item}
@@ -154,15 +154,15 @@ export default function LandingPage() {
               </ul>
               <Link
                 to="/register"
-                className="inline-block mt-8 rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 font-medium transition"
+                className="inline-block mt-8 rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast px-6 py-3 font-medium transition"
               >
                 Join MY VILLAGE
               </Link>
             </div>
             <div className="order-1 lg:order-2 flex justify-center">
               <div className="relative">
-                <div className="w-64 sm:w-72 rounded-[2.5rem] border-8 border-slate-800 bg-slate-800 shadow-2xl overflow-hidden">
-                  <div className="bg-brand-600 text-white text-center py-3 text-sm font-bold">
+                <div className="w-64 sm:w-72 rounded-[2.5rem] border-8 border-elevated bg-elevated shadow-2xl overflow-hidden">
+                  <div className="bg-primary text-primary-contrast text-center py-3 text-sm font-bold">
                     MY VILLAGE
                   </div>
                   <img
@@ -177,24 +177,24 @@ export default function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 bg-gradient-to-r from-brand-600 to-brand-700">
+        <section className="py-16 bg-gradient-to-r from-primary to-primary-hover">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold text-primary-contrast">
               Ready to connect with your village?
             </h2>
-            <p className="mt-3 text-brand-100 max-w-xl mx-auto">
+            <p className="mt-3 text-primary-contrast/80 max-w-xl mx-auto">
               Create your account today and start exploring events, news, and your community.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 to="/register"
-                className="rounded-lg bg-white text-brand-700 hover:bg-brand-50 px-6 py-3 font-medium transition"
+                className="rounded-lg bg-surface text-primary hover:bg-soft px-6 py-3 font-medium transition"
               >
                 Sign up now
               </Link>
               <Link
                 to="/login"
-                className="rounded-lg border border-white/40 text-white hover:bg-white/10 px-6 py-3 font-medium transition"
+                className="rounded-lg border border-primary-contrast/40 text-primary-contrast hover:bg-primary-contrast/10 px-6 py-3 font-medium transition"
               >
                 Log in
               </Link>

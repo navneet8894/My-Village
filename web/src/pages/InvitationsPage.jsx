@@ -50,16 +50,16 @@ export default function InvitationsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Personal invitations</h1>
-      <form onSubmit={onSubmit} className="mt-4 space-y-3 max-w-lg border rounded-xl p-4 dark:border-slate-800">
+      <form onSubmit={onSubmit} className="mt-4 space-y-3 max-w-lg border border-line rounded-xl p-4 bg-card">
         <input
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
         />
         <textarea
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -68,16 +68,16 @@ export default function InvitationsPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-brand-600 text-white px-4 py-2 disabled:opacity-60"
+          className="rounded-lg bg-primary text-primary-contrast px-4 py-2 disabled:opacity-60"
         >
           Invite all villagers
         </button>
       </form>
       <div className="mt-8 space-y-4">
         {(data || []).map((inv) => (
-          <article key={inv._id} className="rounded-xl border p-4 dark:border-slate-800">
+          <article key={inv._id} className="rounded-xl border border-line bg-card p-4">
             <h3 className="font-semibold">{inv.title}</h3>
-            <p className="text-sm text-slate-500">{inv.userId?.name}</p>
+            <p className="text-sm text-text-subtle">{inv.userId?.name}</p>
             <p className="mt-2 text-sm">{inv.message}</p>
             <div className="flex gap-2 mt-2 flex-wrap">
               {(inv.media || []).map((m, i) => (

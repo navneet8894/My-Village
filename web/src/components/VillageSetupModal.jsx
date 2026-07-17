@@ -176,9 +176,9 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
   if (user?.villageId) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
+        <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl border border-line p-6 text-center">
           <h2 className="text-lg font-bold">Village already set</h2>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-text-subtle mt-2">
             You are registered to{' '}
             <strong>{user.villageLocation?.village || 'your village'}</strong>. A user can only
             register to one village.
@@ -186,7 +186,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           <button
             type="button"
             onClick={onClose}
-            className="mt-5 w-full rounded-lg bg-brand-600 text-white py-2.5 font-medium"
+            className="mt-5 w-full rounded-lg bg-primary text-primary-contrast py-2.5 font-medium"
           >
             OK
           </button>
@@ -244,13 +244,13 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800">
-        <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-10">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-card shadow-2xl border border-line">
+        <div className="sticky top-0 bg-card border-b border-line px-6 py-4 flex justify-between items-center z-10">
           <h2 className="text-lg font-bold">Add your village</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+            className="text-text-subtle hover:text-text text-xl leading-none"
             aria-label="Close"
           >
             ×
@@ -261,7 +261,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           <div>
             <label className="block text-sm font-medium mb-1">Country</label>
             <select
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2"
+              className="theme-input"
               value={countryCode}
               onChange={(e) => {
                 const c = countries.find((x) => x.isoCode === e.target.value);
@@ -288,7 +288,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           <div>
             <label className="block text-sm font-medium mb-1">State / Union Territory</label>
             <select
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 disabled:opacity-60"
+              className="theme-input"
               value={stateName}
               disabled={!countryCode}
               onMouseDown={(e) => {
@@ -321,7 +321,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           <div>
             <label className="block text-sm font-medium mb-1">District</label>
             <select
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 disabled:opacity-60"
+              className="theme-input"
               value={district}
               disabled={!stateName}
               onMouseDown={(e) => {
@@ -355,12 +355,12 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           <div>
             <label className="block text-sm font-medium mb-1">Village</label>
             {!district ? (
-              <p className="text-sm text-slate-500 py-2">Select a district to load village names</p>
+              <p className="text-sm text-text-subtle py-2">Select a district to load village names</p>
             ) : (
               <>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 mb-2"
+                  className="theme-input mb-2"
                   placeholder="Search your village name…"
                   value={villageSearch}
                   onChange={(e) => {
@@ -370,20 +370,20 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                 />
 
                 {loading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-500 py-4 justify-center">
+                  <div className="flex items-center gap-2 text-sm text-text-subtle py-4 justify-center">
                     <Spinner className="h-4 w-4" />
                     Loading villages for {district}…
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs text-slate-500 mb-2">
+                    <p className="text-xs text-text-subtle mb-2">
                       {villageSearch
                         ? `${villages.length} match${villages.length !== 1 ? 'es' : ''} of ${allVillages.length} villages`
                         : `${allVillages.length} village${allVillages.length !== 1 ? 's' : ''} in ${district}`}
                     </p>
-                    <div className="max-h-52 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 divide-y dark:divide-slate-800">
+                    <div className="max-h-52 overflow-y-auto rounded-lg border border-line divide-y divide-line">
                       {villages.length === 0 && !canAddCustom && (
-                        <p className="text-sm text-slate-500 p-4 text-center">
+                        <p className="text-sm text-text-subtle p-4 text-center">
                           No villages loaded. Type your village name below to add it.
                         </p>
                       )}
@@ -392,9 +392,9 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                           key={`${v.name}-${v.source || 'x'}`}
                           type="button"
                           onClick={() => setSelectedVillage(v)}
-                          className={`w-full text-left px-3 py-2.5 text-sm hover:bg-brand-50 dark:hover:bg-brand-900/20 transition ${
+                          className={`w-full text-left px-3 py-2.5 text-sm hover:bg-primary-muted transition ${
                             selectedVillage?.name === v.name
-                              ? 'bg-brand-100 dark:bg-brand-900/40 font-medium text-brand-800 dark:text-brand-200'
+                              ? 'bg-primary-soft font-medium text-primary-text'
                               : ''
                           }`}
                         >
@@ -407,14 +407,14 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                       <button
                         type="button"
                         onClick={addCustomVillage}
-                        className="mt-3 w-full rounded-lg border-2 border-dashed border-brand-400 text-brand-700 dark:text-brand-300 py-2.5 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20"
+                        className="mt-3 w-full rounded-lg border-2 border-dashed border-primary text-primary-text py-2.5 text-sm font-medium hover:bg-primary-muted"
                       >
                         + Add &quot;{villageSearch.trim()}&quot; as my village
                       </button>
                     )}
 
                     {selectedVillage && (
-                      <p className="mt-2 text-sm text-brand-700 dark:text-brand-300 font-medium">
+                      <p className="mt-2 text-sm text-primary-text font-medium">
                         Selected: {selectedVillage.name}
                       </p>
                     )}
@@ -439,14 +439,14 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 py-2.5 font-medium"
+              className="flex-1 rounded-lg border border-line py-2.5 font-medium hover:bg-soft"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || !selectedVillage || !district}
-              className="flex-1 rounded-lg bg-brand-600 hover:bg-brand-700 text-white py-2.5 font-medium disabled:opacity-60 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary hover:bg-primary-hover text-primary-contrast py-2.5 font-medium disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {saving ? <Spinner className="h-4 w-4" /> : null}
               Save village

@@ -58,9 +58,9 @@ export default function ProfilePage() {
         {data?.avatar ? (
           <img src={data.avatar} alt="" className="h-20 w-20 rounded-full object-cover border" />
         ) : (
-          <div className="h-20 w-20 rounded-full bg-slate-200 dark:bg-slate-800" />
+          <div className="h-20 w-20 rounded-full bg-soft" />
         )}
-        <label className="text-sm text-brand-600 cursor-pointer">
+        <label className="text-sm text-primary cursor-pointer">
           Change photo
           <input type="file" accept="image/*" className="hidden" onChange={onAvatar} />
         </label>
@@ -71,13 +71,13 @@ export default function ProfilePage() {
             <label className="text-sm font-medium capitalize">{f}</label>
             {f === 'bio' || f === 'address' ? (
               <textarea
-                className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+                className="theme-input"
                 value={form[f]}
                 onChange={(e) => setForm({ ...form, [f]: e.target.value })}
               />
             ) : (
               <input
-                className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+                className="theme-input"
                 value={form[f]}
                 onChange={(e) => setForm({ ...form, [f]: e.target.value })}
               />
@@ -87,7 +87,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-brand-600 text-white px-4 py-2 disabled:opacity-60"
+          className="rounded-lg bg-primary text-primary-contrast px-4 py-2 disabled:opacity-60"
         >
           Save
         </button>

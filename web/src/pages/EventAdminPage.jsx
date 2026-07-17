@@ -75,46 +75,46 @@ export default function EventAdminPage() {
       <h1 className="text-2xl font-bold">Manage events</h1>
       <form onSubmit={onSubmit} className="mt-6 space-y-3 max-w-lg">
         <input
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Title"
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
           required
         />
         <textarea
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Description"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
         <input
           type="datetime-local"
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           value={form.date}
           onChange={(e) => setForm({ ...form, date: e.target.value })}
           required
         />
         <input
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Place"
           value={form.place}
           onChange={(e) => setForm({ ...form, place: e.target.value })}
         />
         <input
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Timing label (e.g. 5 PM – 8 PM)"
           value={form.timing}
           onChange={(e) => setForm({ ...form, timing: e.target.value })}
         />
         <div className="flex gap-2">
           <input
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+            className="theme-input"
             placeholder="Lat"
             value={form.lat}
             onChange={(e) => setForm({ ...form, lat: e.target.value })}
           />
           <input
-            className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+            className="theme-input"
             placeholder="Lng"
             value={form.lng}
             onChange={(e) => setForm({ ...form, lng: e.target.value })}
@@ -124,24 +124,24 @@ export default function EventAdminPage() {
           <label className="text-sm font-medium">Banner image</label>
           <input type="file" accept="image/*" onChange={onUpload} className="block mt-1 text-sm" />
           {form.bannerUrl && (
-            <p className="text-xs text-slate-500 truncate mt-1">{form.bannerUrl}</p>
+            <p className="text-xs text-text-subtle truncate mt-1">{form.bannerUrl}</p>
           )}
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-brand-600 text-white px-4 py-2 disabled:opacity-60"
+          className="rounded-lg bg-primary text-primary-contrast px-4 py-2 disabled:opacity-60"
         >
           Publish event
         </button>
       </form>
       <ul className="mt-10 space-y-2">
         {(data || []).map((e) => (
-          <li key={e._id} className="flex justify-between items-center border rounded-lg px-3 py-2">
+          <li key={e._id} className="flex justify-between items-center border border-line rounded-lg px-3 py-2">
             <span>{e.title}</span>
             <button
               type="button"
-              className="text-red-600 text-sm"
+              className="text-danger text-sm"
               onClick={async () => {
                 if (!confirm('Delete?')) return;
                 await deleteEvent(e._id).unwrap();

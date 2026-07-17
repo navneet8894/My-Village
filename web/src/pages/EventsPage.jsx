@@ -13,23 +13,23 @@ export default function EventsPage() {
         {(data || []).map((e) => (
           <article
             key={e._id}
-            className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900"
+            className="rounded-xl border border-line overflow-hidden bg-card"
           >
             {e.bannerUrl && (
               <img src={e.bannerUrl} alt="" className="w-full h-40 object-cover" />
             )}
             <div className="p-4">
               <h2 className="text-lg font-semibold">{e.title}</h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-text-subtle">
                 {new Date(e.date).toLocaleString()} · {e.place || 'TBD'} · {e.timing}
               </p>
-              <p className="mt-2 text-slate-600 dark:text-slate-300 text-sm">{e.description}</p>
+              <p className="mt-2 text-text-muted text-sm">{e.description}</p>
             </div>
           </article>
         ))}
       </div>
       {user?.role === 'admin' && (
-        <Link to="/dashboard/admin/events" className="inline-block mt-6 text-brand-600 text-sm font-medium">
+        <Link to="/dashboard/admin/events" className="inline-block mt-6 text-primary text-sm font-medium">
           Manage events →
         </Link>
       )}

@@ -55,11 +55,11 @@ export default function NewsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Village news</h1>
-      <form onSubmit={onSubmit} className="mt-4 space-y-3 max-w-lg rounded-xl border p-4 dark:border-slate-800">
+      <form onSubmit={onSubmit} className="mt-4 space-y-3 max-w-lg rounded-xl border border-line bg-card p-4">
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value)}
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
         >
           <option value="text">Text</option>
           <option value="photo">Photo</option>
@@ -67,25 +67,25 @@ export default function NewsPage() {
           <option value="voice">Voice</option>
         </select>
         <textarea
-          className="w-full border rounded px-3 py-2 dark:bg-slate-950"
+          className="theme-input"
           placeholder="Caption or message"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
         <input type="file" onChange={onMedia} />
-        {mediaUrl && <p className="text-xs truncate text-slate-500">{mediaUrl}</p>}
+        {mediaUrl && <p className="text-xs truncate text-text-subtle">{mediaUrl}</p>}
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-brand-600 text-white px-4 py-2 disabled:opacity-60"
+          className="rounded-lg bg-primary text-primary-contrast px-4 py-2 disabled:opacity-60"
         >
           Post
         </button>
       </form>
       <div className="mt-8 space-y-4">
         {(data || []).map((n) => (
-          <article key={n._id} className="rounded-xl border p-4 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <div className="text-sm text-slate-500">
+          <article key={n._id} className="rounded-xl border border-line p-4 bg-card">
+            <div className="text-sm text-text-subtle">
               {n.userId?.name} · {new Date(n.createdAt).toLocaleString()}
             </div>
             {n.kind === 'text' && <p className="mt-2">{n.text}</p>}
@@ -98,7 +98,7 @@ export default function NewsPage() {
             {n.kind === 'voice' && n.mediaUrl && <audio src={n.mediaUrl} controls className="mt-2 w-full" />}
             <button
               type="button"
-              className="mt-2 text-sm text-red-600"
+              className="mt-2 text-sm text-danger"
               onClick={async () => {
                 await deleteNews(n._id).unwrap();
                 refetch();

@@ -25,8 +25,8 @@ export default function MapPage() {
     return (
       <div>
         <h1 className="text-2xl font-bold">Village map</h1>
-        <p className="mt-2 text-slate-500">
-          Set <code className="text-sm bg-slate-100 dark:bg-slate-800 px-1 rounded">GOOGLE_MAPS_API_KEY</code> on
+        <p className="mt-2 text-text-subtle">
+          Set <code className="text-sm bg-soft px-1 rounded">GOOGLE_MAPS_API_KEY</code> on
           the API server (see <code>.env.example</code>) and restart. Use a browser-restricted key.
         </p>
       </div>
@@ -36,10 +36,10 @@ export default function MapPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Village map</h1>
-      <p className="text-slate-500 text-sm mt-1">
+      <p className="text-text-subtle text-sm mt-1">
         {user?.villageLocation?.label || 'Your village center and event pins.'}
       </p>
-      <div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+      <div className="mt-4 border border-line rounded-xl overflow-hidden">
         <LoadScript googleMapsApiKey={apiKey}>
           <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={13}>
             <Marker position={center} label="V" title={user?.villageLocation?.village || 'Village center'} />

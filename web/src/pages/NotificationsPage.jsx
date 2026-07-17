@@ -14,7 +14,7 @@ export default function NotificationsPage() {
       <h1 className="text-2xl font-bold">Notifications</h1>
       <button
         type="button"
-        className="mt-2 text-sm text-brand-600"
+        className="mt-2 text-sm text-primary"
         onClick={() => mark((data || []).filter((n) => !n.read).map((n) => n._id))}
       >
         Mark all read
@@ -23,15 +23,15 @@ export default function NotificationsPage() {
         {(data || []).map((n) => (
           <li
             key={n._id}
-            className={`rounded-lg border p-3 dark:border-slate-800 ${n.read ? 'opacity-60' : 'bg-brand-50/50 dark:bg-slate-900'}`}
+            className={`rounded-lg border border-line p-3 ${n.read ? 'opacity-60' : 'bg-primary-muted/60'}`}
           >
             <div className="font-medium">{n.title}</div>
-            <p className="text-sm text-slate-600 dark:text-slate-300">{n.body}</p>
-            <p className="text-xs text-slate-400 mt-1">{n.type}</p>
+            <p className="text-sm text-text-muted">{n.body}</p>
+            <p className="text-xs text-text-subtle mt-1">{n.type}</p>
             {!n.read && (
               <button
                 type="button"
-                className="text-xs text-brand-600 mt-1"
+                className="text-xs text-primary mt-1"
                 onClick={() => mark([n._id])}
               >
                 Mark read
