@@ -3,7 +3,7 @@ const VillageEvent = require('../models/VillageEvent');
 const User = require('../models/User');
 const {
   saveInAppNotification,
-  sendPushToAllUsers,
+  sendPushToUser,
 } = require('./notificationService');
 
 function startCronJobs() {
@@ -24,7 +24,7 @@ function startCronJobs() {
 
         const title = 'Event reminder';
         const body = `"${ev.title}" starts in about 1 hour at ${ev.place || 'TBD'}.`;
-        const users = await User.find({ isBanned: false }).select('_id');
+        const users = await User.find({ isBanned: false, villageId: ev.villageId }).select('_id');
         await Promise.all(
           users.map((u) =>
             saveInAppNotification(u._id, title, body, 'reminder', {
@@ -32,10 +32,11 @@ function startCronJobs() {
             })
           )
         );
-        await sendPushToAllUsers(title, body, {
-          type: 'reminder',
-          eventId: String(ev._id),
-        });
+        await Promise.all(users.map((u) =>
+          sendPushToUser(u._id, title, body, {
+            type: 'reminder', eventId: String(ev._id),
+          })
+        ));
       }
     } catch (e) {
       console.error('Cron reminder error', e);

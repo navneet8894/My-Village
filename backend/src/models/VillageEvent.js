@@ -17,6 +17,12 @@ const eventSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    eventType: {
+      type: String,
+      enum: ['village', 'personal'],
+      default: 'village',
+      index: true,
+    },
     villageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Village',

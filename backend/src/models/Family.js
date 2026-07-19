@@ -5,9 +5,13 @@ const memberSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
     },
     displayName: { type: String, default: '' },
+    dateOfBirth: { type: Date, default: null },
+    gender: { type: String, enum: ['', 'male', 'female', 'other'], default: '' },
+    phone: { type: String, default: '' },
+    occupation: { type: String, default: '' },
     relationshipToHead: { type: String, default: 'member' },
     parentMemberId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -41,6 +41,9 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            <div className="mt-2 text-right">
+              <Link to="/forgot-password" className="theme-link text-sm">Forgot password?</Link>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>

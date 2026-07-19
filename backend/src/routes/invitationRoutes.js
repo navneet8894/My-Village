@@ -9,7 +9,7 @@ const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', listInvitations);
+router.get('/', authRequired, listInvitations);
 router.post('/', authRequired, invitationValidators, validate, createInvitation);
 
 module.exports = router;

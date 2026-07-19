@@ -24,15 +24,26 @@ export const apiSlice = createApi({
       query: (countryCode) => `/public/location/states/${countryCode}`,
     }),
     getDistricts: builder.query({
-      query: ({ countryCode, state }) =>
-        `/public/location/districts?countryCode=${countryCode}&state=${encodeURIComponent(state)}`,
+      query: ({ countryCode, state, stateCode }) => {
+        const p = new URLSearchParams({ countryCode, state });
+        if (stateCode) p.set('stateCode', stateCode);
+        return `/public/location/districts?${p}`;
+      },
+    }),
+    getSubDistricts: builder.query({
+      query: (districtCode) => `/public/location/subdistricts?districtCode=${encodeURIComponent(districtCode)}`,
     }),
     getLocationVillages: builder.query({
-      query: ({ country, state, district, q }) => {
+      query: ({ country, state, district, districtCode, subDistrictCode, q }) => {
         const p = new URLSearchParams({ country, state, district });
+        if (districtCode) p.set('districtCode', districtCode);
+        if (subDistrictCode) p.set('subDistrictCode', subDistrictCode);
         if (q) p.set('q', q);
         return `/public/location/villages?${p}`;
       },
+    }),
+    searchPlaces: builder.query({
+      query: (q) => `/public/location/search?q=${encodeURIComponent(q)}`,
     }),
     getMyVillage: builder.query({
       query: () => '/villages/me',
@@ -42,8 +53,18 @@ export const apiSlice = createApi({
       query: (body) => ({ url: '/villages/join', method: 'POST', body }),
       invalidatesTags: ['User', 'Village', 'Events', 'News', 'Invitations'],
     }),
+    createCustomVillage: builder.mutation({
+      query: (body) => ({ url: '/villages/custom', method: 'POST', body }),
+      invalidatesTags: ['Village'],
+    }),
     login: builder.mutation({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
+    }),
+    forgotPassword: builder.mutation({
+      query: (body) => ({ url: '/auth/forgot-password', method: 'POST', body }),
+    }),
+    resetPassword: builder.mutation({
+      query: (body) => ({ url: '/auth/reset-password', method: 'POST', body }),
     }),
     register: builder.mutation({
       query: (body) => ({ url: '/auth/register', method: 'POST', body }),
@@ -177,6 +198,10 @@ export const apiSlice = createApi({
       query: (id) => `/admin/villages/${id}`,
       providesTags: ['Village'],
     }),
+    adminUpdateVillageLocation: builder.mutation({
+      query: ({ id, lat, lng }) => ({ url: `/admin/villages/${id}/location`, method: 'PATCH', body: { lat, lng } }),
+      invalidatesTags: ['Village', 'User'],
+    }),
   }),
 });
 
@@ -185,10 +210,15 @@ export const {
   useGetCountriesQuery,
   useGetStatesQuery,
   useGetDistrictsQuery,
+  useGetSubDistrictsQuery,
   useGetLocationVillagesQuery,
+  useLazySearchPlacesQuery,
   useGetMyVillageQuery,
   useJoinVillageMutation,
+  useCreateCustomVillageMutation,
   useLoginMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useRegisterMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
@@ -221,4 +251,5 @@ export const {
   useAdminEmergencyMutation,
   useAdminVillagesQuery,
   useAdminVillageDetailQuery,
+  useAdminUpdateVillageLocationMutation,
 } = apiSlice;

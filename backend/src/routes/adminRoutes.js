@@ -12,6 +12,8 @@ const {
   announcementValidators,
   emergencyAlert,
   emergencyValidators,
+  updateVillageLocation,
+  villageLocationValidators,
 } = require('../controllers/adminController');
 const { validate } = require('../middleware/validate');
 const { authRequired, adminOnly } = require('../middleware/auth');
@@ -22,6 +24,7 @@ router.use(authRequired, adminOnly);
 router.get('/stats', getStats);
 router.get('/villages', listVillages);
 router.get('/villages/:id', getVillageDetail);
+router.patch('/villages/:id/location', villageLocationValidators, validate, updateVillageLocation);
 router.get('/users', listUsers);
 router.post('/users/:id/ban', banUser);
 router.post('/users/:id/unban', unbanUser);

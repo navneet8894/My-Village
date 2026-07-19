@@ -9,6 +9,10 @@ function buildTree(members, headId) {
       id: String(m._id),
       userId: m.userId,
       displayName: m.displayName,
+      dateOfBirth: m.dateOfBirth,
+      gender: m.gender,
+      phone: m.phone,
+      occupation: m.occupation,
       relationshipToHead: m.relationshipToHead,
       isHead: m.isHead,
       children: [],
@@ -78,6 +82,10 @@ const addMemberValidators = [
   body('userId').optional().isMongoId(),
   body('email').optional().isEmail(),
   body('displayName').optional().trim(),
+  body('dateOfBirth').optional({ values: 'falsy' }).isISO8601(),
+  body('gender').optional().isIn(['', 'male', 'female', 'other']),
+  body('phone').optional().trim(),
+  body('occupation').optional().trim(),
   body('relationshipToHead').trim().notEmpty(),
   body('parentMemberId').optional().isMongoId(),
   body('isHead').optional().isBoolean(),
@@ -85,7 +93,8 @@ const addMemberValidators = [
 
 async function addMember(req, res, next) {
   try {
-    const { userId, email, displayName, relationshipToHead, parentMemberId, isHead } =
+    const { userId, email, displayName, relationshipToHead, parentMemberId, isHead,
+      dateOfBirth, gender, phone, occupation } =
       req.body;
     let targetUser = null;
     if (userId) {
@@ -93,14 +102,22 @@ async function addMember(req, res, next) {
     } else if (email) {
       targetUser = await User.findOne({ email: email.toLowerCase() });
     }
-    if (!targetUser) {
+    if ((userId || email) && !targetUser) {
       return res.status(404).json({ message: 'User not found — invite them to register first' });
+    }
+
+    if (!targetUser && !displayName?.trim()) {
+      return res.status(400).json({ message: 'Member name is required' });
     }
 
     const family = await Family.findOne({ ownerId: req.user._id });
     if (!family) return res.status(404).json({ message: 'Family not found' });
 
-    const exists = family.members.some(
+    if (parentMemberId && !family.members.id(parentMemberId)) {
+      return res.status(400).json({ message: 'Related family member was not found' });
+    }
+
+    const exists = targetUser && family.members.some(
       (m) => String(m.userId) === String(targetUser._id)
     );
     if (exists) {
@@ -108,16 +125,20 @@ async function addMember(req, res, next) {
     }
 
     const member = {
-      userId: targetUser._id,
-      displayName: displayName || targetUser.name,
+      userId: targetUser?._id || null,
+      displayName: displayName || targetUser?.name,
       relationshipToHead,
-      parentMemberId: parentMemberId || null,
+      parentMemberId: isHead ? null : (parentMemberId || null),
       isHead: !!isHead,
+      dateOfBirth: dateOfBirth || null,
+      gender: gender || '',
+      phone: phone || '',
+      occupation: occupation || '',
     };
     family.members.push(member);
     if (isHead) {
       family.members.forEach((m) => {
-        m.isHead = String(m.userId) === String(targetUser._id);
+        m.isHead = m === family.members[family.members.length - 1];
       });
       family.headMemberId = family.members[family.members.length - 1]._id;
     }
@@ -148,6 +169,7 @@ async function setHead(req, res, next) {
     family.members.forEach((x) => {
       x.isHead = String(x._id) === String(memberId);
     });
+    m.parentMemberId = null;
     family.headMemberId = m._id;
     await family.save();
     const updated = await Family.findById(family._id).populate(
@@ -174,6 +196,12 @@ async function removeMember(req, res, next) {
     if (String(m.userId) === String(req.user._id)) {
       return res.status(400).json({ message: 'Cannot remove yourself' });
     }
+    if (m.isHead || String(family.headMemberId) === String(memberId)) {
+      return res.status(400).json({ message: 'Choose another family head before removing this member' });
+    }
+    family.members.forEach((member) => {
+      if (String(member.parentMemberId) === String(memberId)) member.parentMemberId = null;
+    });
     m.deleteOne();
     await family.save();
     const updated = await Family.findById(family._id).populate(

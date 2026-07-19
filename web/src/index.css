@@ -1,65 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
+@import './styles/tailwind-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    color-scheme: light;
-    --color-app: 248 250 252;
-    --color-surface: 255 255 255;
-    --color-card: 255 255 255;
-    --color-elevated: 255 255 255;
-    --color-input: 255 255 255;
-    --color-line: 226 232 240;
-    --color-soft: 241 245 249;
-    --color-text: 15 23 42;
-    --color-text-muted: 71 85 105;
-    --color-text-subtle: 100 116 139;
-    --color-text-inverted: 255 255 255;
-    --color-primary: 5 150 105;
-    --color-primary-hover: 4 120 87;
-    --color-primary-soft: 209 250 229;
-    --color-primary-muted: 236 253 245;
-    --color-primary-text: 4 120 87;
-    --color-primary-contrast: 255 255 255;
-    --color-danger: 220 38 38;
-    --color-danger-soft: 254 226 226;
-    --color-danger-text: 185 28 28;
-    --color-warning: 217 119 6;
-    --color-warning-soft: 254 243 199;
-    --color-warning-text: 180 83 9;
-  }
-
-  .dark {
-    color-scheme: dark;
-    --color-app: 2 6 23;
-    --color-surface: 15 23 42;
-    --color-card: 15 23 42;
-    --color-elevated: 30 41 59;
-    --color-input: 2 6 23;
-    --color-line: 51 65 85;
-    --color-soft: 30 41 59;
-    --color-text: 241 245 249;
-    --color-text-muted: 203 213 225;
-    --color-text-subtle: 148 163 184;
-    --color-text-inverted: 15 23 42;
-    --color-primary: 16 185 129;
-    --color-primary-hover: 52 211 153;
-    --color-primary-soft: 6 78 59;
-    --color-primary-muted: 6 95 70;
-    --color-primary-text: 167 243 208;
-    --color-primary-contrast: 2 6 23;
-    --color-danger: 248 113 113;
-    --color-danger-soft: 127 29 29;
-    --color-danger-text: 254 202 202;
-    --color-warning: 245 158 11;
-    --color-warning-soft: 120 53 15;
-    --color-warning-text: 253 230 138;
-  }
-
   body {
     @apply bg-app text-text transition-colors duration-200;
+    font-family: 'DM Sans', sans-serif;
   }
+}
+
+@layer components {
+  .village-display { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-weight: 500; }
+  .village-panel { @apply rounded-[22px] border border-[#e9e2da] bg-white shadow-[0_5px_18px_rgba(71,45,29,.045)] dark:border-line dark:bg-card; }
+  .village-hero { background: linear-gradient(145deg, #315f40 0%, #174c35 100%); }
+  .stat-bubble { @apply inline-grid h-9 min-w-9 place-items-center rounded-full px-2 font-serif text-lg font-bold italic; }
+  .stat-bubble.coral { @apply bg-[#fff0eb] text-[#e86b48]; } .stat-bubble.green { @apply bg-[#e8f0eb] text-[#3e7654]; }
+  .stat-bubble.orange { @apply bg-[#fff1e3] text-[#ef9b3d]; } .stat-bubble.yellow { @apply bg-[#fff4cb] text-[#d87823]; }
+  .neighbor-avatar { @apply grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#fff0eb] text-xs font-bold uppercase text-[#dc7658]; }
+  .neighbor-avatar.n1 { @apply bg-[#e8f0eb] text-[#4c735c]; } .neighbor-avatar.n2 { @apply bg-[#fff1df] text-[#dc8b3d]; }
+  .quick-action { @apply flex items-center gap-3 rounded-2xl border border-[#eee6dd] bg-[#fffcf8] px-3 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:border-[#e8bba8] dark:border-line dark:bg-soft; }
+  .quick-action span { @apply grid h-8 w-8 place-items-center rounded-full bg-[#faeee2] text-lg text-[#806e63]; }
+  .square-tile { @apply flex min-h-[210px] flex-col justify-between rounded-[22px] border border-[#e9e2da] bg-white p-5 transition hover:-translate-y-1 hover:shadow-lg dark:border-line dark:bg-card; }
+  .tile-icon { @apply grid h-11 w-11 place-items-center rounded-full; } .tile-icon.coral { @apply bg-[#fff0eb] text-[#ed714d]; }
+  .tile-icon.blue { @apply bg-[#e1edff] text-[#3777ef]; } .tile-icon.green { @apply bg-[#e7efea] text-[#377057]; }
+  .tile-icon.pink { @apply bg-[#ffe8ed] text-[#ee4e72]; } .tile-icon.yellow { @apply bg-[#fff2c7] text-[#e38c1d]; } .tile-icon.orange { @apply bg-[#fff0df] text-[#ec8c30]; }
+  .family-field { @apply grid gap-1.5 text-xs font-bold text-[#6f625a] dark:text-text-muted; }
+  .family-person { @apply flex min-w-[230px] items-center gap-3 rounded-2xl border border-[#e9dfd4] bg-white p-3 shadow-sm dark:border-line dark:bg-card; }
+  .family-head { @apply border-[#e6a990] bg-[#fff8f3] ring-2 ring-[#f7ded2] dark:border-primary dark:bg-primary-muted dark:ring-primary/20; }
+  .family-avatar { @apply grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#e8f0eb] text-xs font-bold uppercase text-[#3c6c51]; }
+  .head-badge { @apply rounded-full bg-[#df6744] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white; }
+  .family-tree, .family-tree ul { @apply list-none; }
+  .family-branch { @apply relative; }
+  .family-children { @apply relative ml-5 mt-3 space-y-3 border-l-2 border-[#e6d9ce] pl-7 dark:border-line; }
+  .family-children > .family-branch::before { content: ''; @apply absolute -left-7 top-7 h-0.5 w-7 bg-[#e6d9ce] dark:bg-line; }
+  .village-map { @apply w-full overflow-hidden rounded-[18px] bg-[#e8eee8]; }
+  .village-map-popup { @apply grid min-w-[140px] gap-1 p-1 text-[#3d312b]; }
+  .village-map-popup strong { @apply text-sm; } .village-map-popup span { @apply text-xs text-[#74675f]; }
 }
 
 @layer components {

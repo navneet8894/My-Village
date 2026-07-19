@@ -10,6 +10,7 @@ const eventValidators = [
   body('place').optional().isString(),
   body('timing').optional().isString(),
   body('location').optional().isObject(),
+  body('eventType').optional().isIn(['village', 'personal']),
 ];
 
 async function listEvents(req, res, next) {
@@ -25,7 +26,10 @@ async function listEvents(req, res, next) {
 
 async function getEvent(req, res, next) {
   try {
-    const ev = await VillageEvent.findById(req.params.id).populate(
+    const ev = await VillageEvent.findOne({
+      _id: req.params.id,
+      ...villageFilter(req.user),
+    }).populate(
       'createdBy',
       'name avatar'
     );
@@ -39,8 +43,9 @@ async function getEvent(req, res, next) {
 async function createEvent(req, res, next) {
   try {
     const villageId = requireUserVillage(req.user);
-    const { title, description, date, place, timing, location, bannerUrl } =
+    const { title, description, date, place, timing, location, bannerUrl, eventType } =
       req.body;
+    const resolvedType = req.user.role === 'admin' ? eventType || 'village' : 'personal';
     const ev = await VillageEvent.create({
       title,
       description,
@@ -51,9 +56,10 @@ async function createEvent(req, res, next) {
       location: location || {},
       createdBy: req.user._id,
       villageId,
+      eventType: resolvedType,
     });
     await notifyAllVillagers(
-      'New village event',
+      resolvedType === 'personal' ? 'Villager function invitation' : 'New village event',
       title,
       'event',
       { eventId: String(ev._id) },
@@ -67,8 +73,16 @@ async function createEvent(req, res, next) {
 
 async function updateEvent(req, res, next) {
   try {
-    const ev = await VillageEvent.findById(req.params.id);
+    const ev = await VillageEvent.findOne({
+      _id: req.params.id,
+      ...villageFilter(req.user),
+    });
     if (!ev) return res.status(404).json({ message: 'Not found' });
+    if (req.user.role !== 'admin' && String(ev.createdBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only edit your own function' });
+    }
+    if (req.user.role !== 'admin') req.body.eventType = 'personal';
+    if (req.body.date) ev.reminderSent = false;
     Object.assign(ev, req.body);
     await ev.save();
     res.json(ev);
@@ -79,7 +93,15 @@ async function updateEvent(req, res, next) {
 
 async function deleteEvent(req, res, next) {
   try {
-    await VillageEvent.findByIdAndDelete(req.params.id);
+    const ev = await VillageEvent.findOne({
+      _id: req.params.id,
+      ...villageFilter(req.user),
+    });
+    if (!ev) return res.status(404).json({ message: 'Not found' });
+    if (req.user.role !== 'admin' && String(ev.createdBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only delete your own function' });
+    }
+    await ev.deleteOne();
     res.json({ ok: true });
   } catch (e) {
     next(e);

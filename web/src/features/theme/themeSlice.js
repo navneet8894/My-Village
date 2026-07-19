@@ -1,12 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 function applyDarkClass(dark) {
+  if (typeof document === 'undefined') return;
   if (dark) document.documentElement.classList.add('dark');
   else document.documentElement.classList.remove('dark');
 }
 
-const saved = localStorage.getItem('theme');
-const initialDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+const initialDark = saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 applyDarkClass(initialDark);
 
 const slice = createSlice({

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../shared/ui';
 import {
   useAdminUsersQuery,
   useAdminBanMutation,
@@ -41,39 +42,29 @@ export default function AdminUsersPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 overflow-x-auto rounded-xl border border-line bg-card">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line bg-soft text-left">
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold hidden sm:table-cell">Email</th>
-                <th className="px-4 py-3 font-semibold">Role</th>
-                <th className="px-4 py-3 font-semibold hidden md:table-cell">Status</th>
+        <div className="lg:col-span-2">
+          <Table>
+            <TableHead>
+              <tr>
+                <TableHeader>Name</TableHeader>
+                <TableHeader className="hidden sm:table-cell">Email</TableHeader>
+                <TableHeader>Role</TableHeader>
+                <TableHeader className="hidden md:table-cell">Status</TableHeader>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
+            </TableHead>
+            <TableBody>
               {(users || []).map((u) => (
-                <tr
+                <TableRow
                   key={u._id}
                   onClick={() => setSelected(u)}
-                  className={`cursor-pointer hover:bg-soft transition ${
+                  className={`cursor-pointer ${
                     selected?._id === u._id ? 'bg-primary-muted' : ''
                   }`}
                 >
-                  <td className="px-4 py-3 font-medium">{u.name}</td>
-                  <td className="px-4 py-3 text-text-subtle hidden sm:table-cell">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.role === 'admin'
-                          ? 'bg-primary-soft text-primary-text'
-                          : 'bg-soft text-text-muted'
-                      }`}
-                    >
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
+                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell className="hidden text-text-subtle sm:table-cell">{u.email}</TableCell>
+                  <TableCell><Badge variant={u.role === 'admin' ? 'primary' : 'default'}>{u.role}</Badge></TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {u.isBanned ? (
                       <span className="text-danger text-xs font-medium">Banned</span>
                     ) : u.isEmailVerified ? (
@@ -81,14 +72,14 @@ export default function AdminUsersPage() {
                     ) : (
                       <span className="text-warning text-xs font-medium">Pending</span>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
-        <div className="rounded-xl border border-line bg-card p-5 h-fit">
+        <Card className="h-fit p-5">
           {selected ? (
             <div className="space-y-4">
               <h2 className="font-semibold text-lg">{selected.name}</h2>
@@ -138,9 +129,9 @@ export default function AdminUsersPage() {
               </dl>
               <div className="pt-2 border-t border-line">
                 {!selected.isBanned ? (
-                  <button
+                  <Button
                     type="button"
-                    className="w-full rounded-lg border border-danger/40 text-danger hover:bg-danger-soft py-2 text-sm font-medium"
+                    variant="danger" className="w-full"
                     onClick={async () => {
                       try {
                         await ban({ id: selected._id, reason: 'Moderation' }).unwrap();
@@ -153,11 +144,11 @@ export default function AdminUsersPage() {
                     }}
                   >
                     Ban user
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     type="button"
-                    className="w-full rounded-lg bg-primary text-primary-contrast py-2 text-sm font-medium"
+                    className="w-full"
                     onClick={async () => {
                       try {
                         await unban(selected._id).unwrap();
@@ -170,7 +161,7 @@ export default function AdminUsersPage() {
                     }}
                   >
                     Unban user
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -179,7 +170,7 @@ export default function AdminUsersPage() {
               Select a user from the list to view details
             </p>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

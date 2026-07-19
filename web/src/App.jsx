@@ -1,27 +1,30 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useGetMeQuery } from './app/apiSlice';
 import { setCredentials, setUser } from './features/auth/authSlice';
 import Layout from './components/Layout';
 import Spinner from './components/Spinner';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import VerifyOtpPage from './pages/VerifyOtpPage';
-import DashboardPage from './pages/DashboardPage';
-import FamilyPage from './pages/FamilyPage';
-import MapPage from './pages/MapPage';
-import EventsPage from './pages/EventsPage';
-import EventAdminPage from './pages/EventAdminPage';
-import NewsPage from './pages/NewsPage';
-import InvitationsPage from './pages/InvitationsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
-import AdminUsersPage from './pages/AdminUsersPage';
-import AdminVillagesPage from './pages/AdminVillagesPage';
-import AdminVillageDetailPage from './pages/AdminVillageDetailPage';
+import LanguageSwitcher from './components/LanguageSwitcher';
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const VerifyOtpPage = lazy(() => import('./pages/VerifyOtpPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const FamilyPage = lazy(() => import('./pages/FamilyPage'));
+const MapPage = lazy(() => import('./pages/MapPage'));
+const EventsPage = lazy(() => import('./pages/EventsPage'));
+const EventAdminPage = lazy(() => import('./pages/EventAdminPage'));
+const NewsPage = lazy(() => import('./pages/NewsPage'));
+const InvitationsPage = lazy(() => import('./pages/InvitationsPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
+const AdminVillagesPage = lazy(() => import('./pages/AdminVillagesPage'));
+const AdminVillageDetailPage = lazy(() => import('./pages/AdminVillageDetailPage'));
 
 function PrivateRoute({ children, admin }) {
   const token = useSelector((s) => s.auth.token);
@@ -62,6 +65,8 @@ export default function App() {
   const dispatch = useDispatch();
   const token = useSelector((s) => s.auth.token);
   const { data, isSuccess } = useGetMeQuery(undefined, { skip: !token });
+  const location = useLocation();
+  const authPage = ['/login', '/register', '/verify', '/forgot-password'].includes(location.pathname);
 
   useEffect(() => {
     if (isSuccess && data) dispatch(setUser(data));
@@ -73,11 +78,15 @@ export default function App() {
   }, [dispatch]);
 
   return (
+    <>
+    {authPage && <LanguageSwitcher className="fixed right-16 top-4 z-50 sm:right-20" />}
+    <Suspense fallback={<div className="grid min-h-[40vh] place-items-center"><Spinner /></div>}>
     <Routes>
       <Route path="/" element={<GuestLanding />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify" element={<VerifyOtpPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route
         path="/dashboard"
         element={
@@ -137,5 +146,7 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
+    </>
   );
 }

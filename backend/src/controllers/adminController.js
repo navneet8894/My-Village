@@ -9,14 +9,18 @@ const { notifyAllVillagers } = require('../services/notificationService');
 
 async function getStats(req, res, next) {
   try {
-    const [userCount, families, postCount, villageCount] = await Promise.all([
+    const [userCount, families, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount] = await Promise.all([
       User.countDocuments(),
       Family.find().select('members'),
       VillageNews.countDocuments({ isRemoved: { $ne: true } }),
       Village.countDocuments(),
+      VillageEvent.countDocuments(),
+      VillageEvent.countDocuments({ date: { $gte: new Date() } }),
+      User.countDocuments({ isBanned: true }),
+      User.countDocuments({ isEmailVerified: true }),
     ]);
     const totalMembers = families.reduce((sum, f) => sum + (f.members?.length || 0), 0);
-    res.json({ userCount, totalMembers, postCount, villageCount });
+    res.json({ userCount, totalMembers, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount });
   } catch (e) {
     next(e);
   }
@@ -168,6 +172,23 @@ async function getVillageDetail(req, res, next) {
   }
 }
 
+const villageLocationValidators = [
+  body('lat').isFloat({ min: -90, max: 90 }).toFloat(),
+  body('lng').isFloat({ min: -180, max: 180 }).toFloat(),
+];
+
+async function updateVillageLocation(req, res, next) {
+  try {
+    const village = await Village.findById(req.params.id);
+    if (!village) return res.status(404).json({ message: 'Village not found' });
+    village.lat = req.body.lat;
+    village.lng = req.body.lng;
+    await village.save();
+    await User.updateMany({ villageId: village._id }, { $set: { 'villageLocation.lat': village.lat, 'villageLocation.lng': village.lng } });
+    res.json({ village });
+  } catch (e) { next(e); }
+}
+
 module.exports = {
   getStats,
   listVillages,
@@ -181,4 +202,6 @@ module.exports = {
   announcementValidators,
   emergencyAlert,
   emergencyValidators,
+  updateVillageLocation,
+  villageLocationValidators,
 };

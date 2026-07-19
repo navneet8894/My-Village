@@ -8,6 +8,9 @@ const joinVillageValidators = [
   body('country').trim().notEmpty(),
   body('state').trim().notEmpty(),
   body('district').trim().notEmpty(),
+  body('districtCode').optional().isString(),
+  body('subDistrict').optional().isString(),
+  body('subDistrictCode').optional().isString(),
   body('village').trim().notEmpty(),
   body('countryCode').optional().isString(),
   body('stateCode').optional().isString(),
@@ -15,6 +18,25 @@ const joinVillageValidators = [
   body('lng').optional({ values: 'null' }).isFloat(),
   body('placeId').optional().isString(),
 ];
+
+const createVillageValidators = [
+  body('country').trim().notEmpty(), body('state').trim().notEmpty(),
+  body('district').trim().notEmpty(), body('village').trim().isLength({ min: 2, max: 120 }),
+  body('countryCode').optional().isString(), body('stateCode').optional().isString(),
+  body('districtCode').optional().isString(), body('subDistrict').optional().isString(),
+  body('subDistrictCode').optional().isString(),
+];
+
+async function createVillage(req, res, next) {
+  try {
+    const { village: name, ...location } = req.body;
+    const village = await Village.findOrCreate({ ...location, name });
+    res.status(201).json({
+      name: village.name, lat: village.lat, lng: village.lng, placeId: village.placeId,
+      formattedAddress: village.formattedAddress, source: 'database',
+    });
+  } catch (e) { next(e); }
+}
 
 async function joinVillage(req, res, next) {
   try {
@@ -32,6 +54,9 @@ async function joinVillage(req, res, next) {
       state,
       stateCode,
       district,
+      districtCode,
+      subDistrict,
+      subDistrictCode,
       village,
       lat,
       lng,
@@ -51,6 +76,9 @@ async function joinVillage(req, res, next) {
       state,
       stateCode: stateCode || '',
       district,
+      districtCode: districtCode || '',
+      subDistrict: subDistrict || '',
+      subDistrictCode: subDistrictCode || '',
       name: village,
       lat: coords.lat,
       lng: coords.lng,
@@ -111,4 +139,6 @@ module.exports = {
   joinVillageValidators,
   getMyVillage,
   getVillageMembers,
+  createVillage,
+  createVillageValidators,
 };

@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, trim: true, default: '' },
     password: { type: String, required: true, minlength: 6, select: false },
+    tokenVersion: { type: Number, default: 0, select: false },
     role: { type: String, enum: ROLES, default: 'user' },
     avatar: { type: String, default: '' },
     bio: { type: String, default: '' },
@@ -45,6 +46,7 @@ const userSchema = new mongoose.Schema(
 userSchema.methods.toJSON = function toJSON() {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.tokenVersion;
   return obj;
 };
 

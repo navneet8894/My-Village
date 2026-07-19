@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { Button, Card, Dropdown } from '../shared/ui';
 import {
   useGetNewsQuery,
   useCreateNewsMutation,
@@ -55,17 +56,16 @@ export default function NewsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Village news</h1>
-      <form onSubmit={onSubmit} className="mt-4 space-y-3 max-w-lg rounded-xl border border-line bg-card p-4">
-        <select
+      <Card as="form" onSubmit={onSubmit} className="mt-4 max-w-lg space-y-3 p-4">
+        <Dropdown
           value={kind}
           onChange={(e) => setKind(e.target.value)}
-          className="theme-input"
         >
           <option value="text">Text</option>
           <option value="photo">Photo</option>
           <option value="video">Video</option>
           <option value="voice">Voice</option>
-        </select>
+        </Dropdown>
         <textarea
           className="theme-input"
           placeholder="Caption or message"
@@ -74,14 +74,12 @@ export default function NewsPage() {
         />
         <input type="file" onChange={onMedia} />
         {mediaUrl && <p className="text-xs truncate text-text-subtle">{mediaUrl}</p>}
-        <button
-          type="submit"
+        <Button type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-primary text-primary-contrast px-4 py-2 disabled:opacity-60"
         >
           Post
-        </button>
-      </form>
+        </Button>
+      </Card>
       <div className="mt-8 space-y-4">
         {(data || []).map((n) => (
           <article key={n._id} className="rounded-xl border border-line p-4 bg-card">

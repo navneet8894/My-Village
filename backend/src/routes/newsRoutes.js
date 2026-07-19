@@ -10,7 +10,7 @@ const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', listNews);
+router.get('/', authRequired, listNews);
 router.post('/', authRequired, newsValidators, validate, createNews);
 router.delete('/:id', authRequired, deleteOwnNews);
 

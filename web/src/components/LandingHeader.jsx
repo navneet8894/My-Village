@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function LandingHeader() {
   return (
@@ -27,6 +28,7 @@ export default function LandingHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
           <ThemeToggle compact className="hidden sm:inline-flex" />
           <Link
             to="/login"

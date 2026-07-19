@@ -85,7 +85,7 @@ const loginValidators = [
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +tokenVersion');
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -102,7 +102,7 @@ async function login(req, res, next) {
     if (!user.isEmailVerified) {
       return res.status(403).json({ message: 'Please verify your email first' });
     }
-    const token = signToken(user._id);
+    const token = signToken(user._id, user.tokenVersion);
     user.password = undefined;
     res.json({ token, user });
   } catch (e) {
@@ -131,6 +131,59 @@ async function resendOtp(req, res, next) {
       { $set: { registerMeta: meta } }
     );
     res.json({ message: 'Code resent', devOtp: mail.dev });
+  } catch (e) {
+    next(e);
+  }
+}
+
+const forgotPasswordValidators = [body('email').isEmail().normalizeEmail()];
+
+async function forgotPassword(req, res, next) {
+  try {
+    const email = req.body.email.toLowerCase();
+    const user = await User.findOne({ email }).select('_id');
+    let devOtp;
+    if (user) {
+      const result = await createAndSendOtp(email, 'reset');
+      devOtp = result.mail.dev;
+    }
+    res.json({
+      message: 'If an account exists for this email, a reset code has been sent.',
+      ...(devOtp ? { devOtp } : {}),
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
+const resetPasswordValidators = [
+  body('email').isEmail().normalizeEmail(),
+  body('code').isLength({ min: 6, max: 6 }).isNumeric(),
+  body('password')
+    .isLength({ min: 8 })
+    .matches(/[a-z]/)
+    .matches(/[A-Z]/)
+    .matches(/[0-9]/)
+    .withMessage('Password must be 8+ characters with uppercase, lowercase and a number'),
+];
+
+async function resetPassword(req, res, next) {
+  try {
+    const email = req.body.email.toLowerCase();
+    const otp = await Otp.findOne({ email, purpose: 'reset', code: req.body.code });
+    if (!otp || otp.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired reset code' });
+    }
+    const user = await User.findOne({ email }).select('+password +tokenVersion');
+    if (!user) {
+      await Otp.deleteMany({ email, purpose: 'reset' });
+      return res.status(400).json({ message: 'Invalid or expired reset code' });
+    }
+    user.password = await bcrypt.hash(req.body.password, 10);
+    user.tokenVersion = Number(user.tokenVersion || 0) + 1;
+    await user.save();
+    await Otp.deleteMany({ email, purpose: 'reset' });
+    res.json({ message: 'Password reset successful. Please sign in.' });
   } catch (e) {
     next(e);
   }
@@ -198,4 +251,8 @@ module.exports = {
   updateProfile,
   updateProfileValidators,
   registerFcmToken,
+  forgotPassword,
+  forgotPasswordValidators,
+  resetPassword,
+  resetPasswordValidators,
 };

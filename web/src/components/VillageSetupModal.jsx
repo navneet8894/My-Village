@@ -1,25 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import VillageMap from './VillageMap';
 import {
   useGetLocationVillagesQuery,
   useGetMapConfigQuery,
+  useGetStatesQuery,
+  useGetDistrictsQuery,
+  useGetSubDistrictsQuery,
   useJoinVillageMutation,
+  useCreateCustomVillageMutation,
 } from '../app/apiSlice';
 import { setUser } from '../features/auth/authSlice';
 import { fetchVillagesClient } from '../utils/villageSearch';
 import Toast, { getApiErrorMessage } from '../utils/toast';
 import Spinner from './Spinner';
 
-const mapStyle = { width: '100%', height: '200px', borderRadius: '8px' };
-
-function buildJoinBody({ countryName, countryCode, stateName, stateCode, district, village }) {
+function buildJoinBody({ countryName, countryCode, stateName, stateCode, district, districtCode, subDistrict, subDistrictCode, village }) {
   const body = {
     country: countryName,
     countryCode,
     state: stateName,
     stateCode,
     district,
+    districtCode,
+    subDistrict,
+    subDistrictCode,
     village: village.name,
   };
   if (village.lat != null && village.lng != null) {
@@ -36,6 +41,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
   const user = useSelector((s) => s.auth.user);
   const { data: cfg } = useGetMapConfigQuery();
   const [joinVillage, { isLoading: saving }] = useJoinVillageMutation();
+  const [createCustomVillage, { isLoading: addingVillage }] = useCreateCustomVillageMutation();
 
   const [locationApi, setLocationApi] = useState(null);
   const [allVillages, setAllVillages] = useState([]);
@@ -56,21 +62,37 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
   const [stateCode, setStateCode] = useState('');
   const [stateName, setStateName] = useState('');
   const [district, setDistrict] = useState('');
+  const [districtCode, setDistrictCode] = useState('');
+  const [subDistrict, setSubDistrict] = useState('');
+  const [subDistrictCode, setSubDistrictCode] = useState('');
   const [villageSearch, setVillageSearch] = useState('');
   const [selectedVillage, setSelectedVillage] = useState(null);
+  const [showAddVillage, setShowAddVillage] = useState(false);
+  const [newVillageName, setNewVillageName] = useState('');
 
-  const states = useMemo(
+  const localStates = useMemo(
     () => (locationApi ? locationApi.getStates(countryCode) : []),
     [locationApi, countryCode]
   );
-  const districts = useMemo(
+  const localDistricts = useMemo(
     () => (locationApi ? locationApi.getDistricts(countryCode, stateName) : []),
     [locationApi, countryCode, stateName]
   );
+  const { data: officialStates } = useGetStatesQuery(countryCode, { skip: !open || !countryCode });
+  const { data: officialDistricts } = useGetDistrictsQuery(
+    { countryCode, state: stateName, stateCode },
+    { skip: !open || !countryCode || !stateName }
+  );
+  const { data: subDistricts = [], isFetching: subDistrictsLoading } = useGetSubDistrictsQuery(
+    districtCode,
+    { skip: !open || countryCode !== 'IN' || !districtCode }
+  );
+  const states = officialStates?.length ? officialStates : localStates;
+  const districts = officialDistricts?.length ? officialDistricts : localDistricts;
 
   const { data: apiVillages, isFetching: apiLoading } = useGetLocationVillagesQuery(
-    { country: countryName, state: stateName, district },
-    { skip: !open || !countryName || !stateName || !district }
+    { country: countryName, state: stateName, district, districtCode, subDistrictCode },
+    { skip: !open || !countryName || !stateName || !district || (countryCode === 'IN' && !subDistrictCode) }
   );
 
   // Merge API + client village lists when district is selected (fetch ALL, no search filter)
@@ -118,7 +140,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
     return () => {
       cancelled = true;
     };
-  }, [open, countryName, stateName, district, apiVillages]);
+  }, [open, countryName, stateName, district, districtCode, subDistrictCode, apiVillages]);
 
   const villages = useMemo(() => {
     const q = villageSearch.trim().toLowerCase();
@@ -139,6 +161,9 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
     setStateCode('');
     setStateName('');
     setDistrict('');
+    setDistrictCode('');
+    setSubDistrict('');
+    setSubDistrictCode('');
     setVillageSearch('');
     setSelectedVillage(null);
     setAllVillages([]);
@@ -169,6 +194,26 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
       source: 'custom',
     });
     Toast.success(`"${name}" selected — click Save village`);
+  }
+
+  async function saveCustomVillage(e) {
+    e.preventDefault();
+    const name = newVillageName.trim();
+    if (name.length < 2) return Toast.error('Village name kam se kam 2 characters ka hona chahiye');
+    try {
+      const village = await createCustomVillage({
+        country: countryName, countryCode, state: stateName, stateCode,
+        district, districtCode, subDistrict, subDistrictCode, village: name,
+      }).unwrap();
+      setAllVillages((current) => [...current.filter((v) => v.name.toLowerCase() !== name.toLowerCase()), village].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedVillage(village);
+      setVillageSearch(name);
+      setShowAddVillage(false);
+      setNewVillageName('');
+      Toast.success('Village database me add ho gaya');
+    } catch (err) {
+      Toast.error(getApiErrorMessage(err, 'Village add nahi ho saka'));
+    }
   }
 
   if (!open) return null;
@@ -230,6 +275,9 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           stateName,
           stateCode,
           district,
+          districtCode,
+          subDistrict,
+          subDistrictCode,
           village: selectedVillage,
         })
       ).unwrap();
@@ -270,6 +318,9 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                 setStateCode('');
                 setStateName('');
                 setDistrict('');
+                setDistrictCode('');
+                setSubDistrict('');
+                setSubDistrictCode('');
                 setSelectedVillage(null);
               }}
               required
@@ -301,8 +352,11 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                 if (!requireCountry()) return;
                 const s = states.find((x) => x.name === e.target.value);
                 setStateName(e.target.value);
-                setStateCode(s?.isoCode || '');
+                setStateCode(s?.code || s?.isoCode || '');
                 setDistrict('');
+                setDistrictCode('');
+                setSubDistrict('');
+                setSubDistrictCode('');
                 setSelectedVillage(null);
               }}
               required
@@ -335,7 +389,11 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
               }}
               onChange={(e) => {
                 if (!requireState()) return;
+                const d = districts.find((item) => item.name === e.target.value);
                 setDistrict(e.target.value);
+                setDistrictCode(String(d?.code || ''));
+                setSubDistrict('');
+                setSubDistrictCode('');
                 setSelectedVillage(null);
                 setVillageSearch('');
               }}
@@ -345,17 +403,39 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                 {stateName ? `Select district (${districts.length} available)` : 'Select state first'}
               </option>
               {districts.map((d) => (
-                <option key={d.name} value={d.name}>
+                <option key={`${d.code || ''}-${d.name}`} value={d.name}>
                   {d.name}
                 </option>
               ))}
             </select>
           </div>
 
+          {countryCode === 'IN' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Sub-district / Tehsil</label>
+              <select
+                className="theme-input"
+                value={subDistrictCode}
+                disabled={!districtCode || subDistrictsLoading}
+                onChange={(e) => {
+                  const item = subDistricts.find((row) => String(row.code) === e.target.value);
+                  setSubDistrictCode(e.target.value);
+                  setSubDistrict(item?.name || '');
+                  setSelectedVillage(null);
+                  setVillageSearch('');
+                }}
+                required
+              >
+                <option value="">{subDistrictsLoading ? 'Loading tehsils…' : districtCode ? `Select tehsil (${subDistricts.length} available)` : 'Select district first'}</option>
+                {subDistricts.map((item) => <option key={item.code} value={String(item.code)}>{item.name}</option>)}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">Village</label>
-            {!district ? (
-              <p className="text-sm text-text-subtle py-2">Select a district to load village names</p>
+            {!district || (countryCode === 'IN' && !subDistrictCode) ? (
+              <p className="text-sm text-text-subtle py-2">{!district ? 'Select a district to load village names' : 'Select a tehsil to load village names'}</p>
             ) : (
               <>
                 <input
@@ -382,7 +462,7 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                         : `${allVillages.length} village${allVillages.length !== 1 ? 's' : ''} in ${district}`}
                     </p>
                     <div className="max-h-52 overflow-y-auto rounded-lg border border-line divide-y divide-line">
-                      {villages.length === 0 && !canAddCustom && (
+                      {villages.length === 0 && (
                         <p className="text-sm text-text-subtle p-4 text-center">
                           No villages loaded. Type your village name below to add it.
                         </p>
@@ -401,17 +481,14 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
                           {v.name}
                         </button>
                       ))}
-                    </div>
-
-                    {canAddCustom && (
                       <button
                         type="button"
-                        onClick={addCustomVillage}
-                        className="mt-3 w-full rounded-lg border-2 border-dashed border-primary text-primary-text py-2.5 text-sm font-medium hover:bg-primary-muted"
+                        onClick={() => { setNewVillageName(villageSearch); setShowAddVillage(true); }}
+                        className="sticky bottom-0 w-full bg-primary-muted px-3 py-3 text-left text-sm font-semibold text-primary-text hover:bg-primary-soft"
                       >
-                        + Add &quot;{villageSearch.trim()}&quot; as my village
+                        + Add village
                       </button>
-                    )}
+                    </div>
 
                     {selectedVillage && (
                       <p className="mt-2 text-sm text-primary-text font-medium">
@@ -424,14 +501,10 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
             )}
           </div>
 
-          {cfg?.googleMapsApiKey && selectedVillage?.lat && selectedVillage?.lng && (
+          {selectedVillage?.lat != null && selectedVillage?.lng != null && (
             <div>
               <label className="block text-sm font-medium mb-1">Location preview</label>
-              <LoadScript googleMapsApiKey={cfg.googleMapsApiKey}>
-                <GoogleMap mapContainerStyle={mapStyle} center={mapCenter} zoom={14}>
-                  <Marker position={mapCenter} title={selectedVillage.name} />
-                </GoogleMap>
-              </LoadScript>
+              <VillageMap center={mapCenter} villageName={selectedVillage.name} height={200} />
             </div>
           )}
 
@@ -454,6 +527,25 @@ export default function VillageSetupModal({ open, onClose, onSuccess }) {
           </div>
         </form>
       </div>
+      {showAddVillage && (
+        <div className="absolute inset-0 z-20 grid place-items-center bg-black/60 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowAddVillage(false); }}>
+          <form onSubmit={saveCustomVillage} className="w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Add new village</h3>
+              <button type="button" onClick={() => setShowAddVillage(false)} className="text-xl text-text-subtle hover:text-text">×</button>
+            </div>
+            <label className="mt-5 block text-sm font-medium">District</label>
+            <input className="theme-input mt-1" value={district} disabled />
+            {subDistrict && <><label className="mt-4 block text-sm font-medium">Sub-district / Tehsil</label><input className="theme-input mt-1" value={subDistrict} disabled /></>}
+            <label className="mt-4 block text-sm font-medium">Village name</label>
+            <input autoFocus required minLength={2} maxLength={120} className="theme-input mt-1" value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Enter village name" />
+            <div className="mt-5 flex gap-3">
+              <button type="button" onClick={() => setShowAddVillage(false)} className="theme-button-secondary flex-1">Cancel</button>
+              <button disabled={addingVillage} className="theme-button-primary flex-1">{addingVillage ? 'Adding…' : 'Add village'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
