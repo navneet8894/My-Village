@@ -4,6 +4,7 @@
   "description": "Village Management System REST API",
   "main": "server.js",
   "scripts": {
+    "test": "node test/trips.test.js",
     "start": "node server.js",
     "dev": "nodemon server.js",
     "import:locations": "node --max-old-space-size=2048 scripts/importLocations.js && node --max-old-space-size=2048 scripts/importVillagesFallback.js",

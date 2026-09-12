@@ -14,6 +14,7 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       enum: [
         'event',
+        'trip',
         'reminder',
         'emergency',
         'invitation',

@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Family = require('../models/Family');
+const { getVillagePopulation } = require('../services/villagePopulation');
 const Village = require('../models/Village');
 const VillageNews = require('../models/VillageNews');
 const VillageEvent = require('../models/VillageEvent');
@@ -9,9 +9,8 @@ const { notifyAllVillagers } = require('../services/notificationService');
 
 async function getStats(req, res, next) {
   try {
-    const [userCount, families, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount] = await Promise.all([
-      User.countDocuments(),
-      Family.find().select('members'),
+    const [population, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount] = await Promise.all([
+      getVillagePopulation(),
       VillageNews.countDocuments({ isRemoved: { $ne: true } }),
       Village.countDocuments(),
       VillageEvent.countDocuments(),
@@ -19,8 +18,7 @@ async function getStats(req, res, next) {
       User.countDocuments({ isBanned: true }),
       User.countDocuments({ isEmailVerified: true }),
     ]);
-    const totalMembers = families.reduce((sum, f) => sum + (f.members?.length || 0), 0);
-    res.json({ userCount, totalMembers, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount });
+    res.json({ ...population, postCount, villageCount, eventCount, upcomingEventCount, bannedCount, verifiedCount });
   } catch (e) {
     next(e);
   }
@@ -128,14 +126,14 @@ async function listVillages(req, res, next) {
     const villages = await Village.find().sort({ name: 1 });
     const stats = await Promise.all(
       villages.map(async (v) => {
-        const [userCount, postCount, eventCount] = await Promise.all([
-          User.countDocuments({ villageId: v._id }),
+        const [population, postCount, eventCount] = await Promise.all([
+          getVillagePopulation(v._id),
           VillageNews.countDocuments({ villageId: v._id, isRemoved: false }),
           VillageEvent.countDocuments({ villageId: v._id }),
         ]);
         return {
           ...v.toObject(),
-          userCount,
+          ...population,
           postCount,
           eventCount,
         };
@@ -152,7 +150,7 @@ async function getVillageDetail(req, res, next) {
     const village = await Village.findById(req.params.id);
     if (!village) return res.status(404).json({ message: 'Village not found' });
 
-    const [users, posts, events] = await Promise.all([
+    const [users, posts, events, population] = await Promise.all([
       User.find({ villageId: village._id })
         .select('name email phone role avatar bio createdAt villageLocation')
         .sort({ name: 1 }),
@@ -164,9 +162,10 @@ async function getVillageDetail(req, res, next) {
         .sort({ date: -1 })
         .populate('createdBy', 'name avatar')
         .limit(50),
+      getVillagePopulation(village._id),
     ]);
 
-    res.json({ village, users, posts, events });
+    res.json({ village, users, posts, events, population });
   } catch (e) {
     next(e);
   }

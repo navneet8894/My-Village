@@ -2,6 +2,7 @@ const { body } = require('express-validator');
 const User = require('../models/User');
 const Village = require('../models/Village');
 const VillageNews = require('../models/VillageNews');
+const { getVillagePopulation } = require('../services/villagePopulation');
 const { resolveVillageCoords } = require('../services/locationService');
 
 const joinVillageValidators = [
@@ -108,13 +109,14 @@ async function joinVillage(req, res, next) {
 async function getMyVillage(req, res, next) {
   try {
     if (!req.user.villageId) {
-      return res.json({ village: null, members: [] });
+        return res.json({ village: null, members: [], population: { userCount: 0, additionalFamilyMembers: 0, totalMembers: 0, totalVillagers: 0 } });
     }
     const village = await Village.findById(req.user.villageId);
     const members = await User.find({ villageId: req.user.villageId, isBanned: false })
       .select('name email avatar bio phone villageLocation createdAt')
       .sort({ name: 1 });
-    res.json({ village, members });
+      const population = await getVillagePopulation(req.user.villageId);
+      res.json({ village, members, population });
   } catch (e) {
     next(e);
   }

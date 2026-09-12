@@ -1,229 +1,174 @@
+﻿const mongoose = require('mongoose');
 const Family = require('../models/Family');
 const User = require('../models/User');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
+const { replaceMemberConnections, serializeFamily } = require('../services/familyRelationships');
 
-function buildTree(members, headId) {
-  const byId = new Map();
-  members.forEach((m) => {
-    byId.set(String(m._id), {
-      id: String(m._id),
-      userId: m.userId,
-      displayName: m.displayName,
-      dateOfBirth: m.dateOfBirth,
-      gender: m.gender,
-      phone: m.phone,
-      occupation: m.occupation,
-      relationshipToHead: m.relationshipToHead,
-      isHead: m.isHead,
-      children: [],
+const handle = action => async (req, res, next) => {
+  try { await action(req, res); }
+  catch (error) {
+    if (error.name === 'VersionError') {
+      return res.status(409).json({ message: 'Your family was updated elsewhere. Refresh the family page before saving again.' });
+    }
+    next(error);
+  }
+};
+const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
+const owns = req => ({ ownerId: req.user._id });
+
+async function ownedFamily(req) {
+  const family = await Family.findOne(owns(req));
+  if (!family) fail(404, 'Family not found');
+  return family;
+}
+async function respond(res, family, status = 200) {
+  await family.populate('members.userId', 'name email avatar');
+  res.status(status).json(serializeFamily(family));
+}
+function changeHead(family, memberId) {
+  family.members.forEach(member => { member.isHead = String(member._id) === String(memberId); });
+  family.headMemberId = memberId;
+}
+const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+function writeDetails(member, input) {
+  for (const key of ['displayName', 'gender', 'phone', 'occupation']) {
+    if (has(input, key)) member[key] = input[key];
+  }
+  if (has(input, 'dateOfBirth')) member.dateOfBirth = input.dateOfBirth || null;
+}
+function writeRelationships(family, member, input) {
+  if (!has(input, 'parentIds') && !has(input, 'spouseId')) return;
+  replaceMemberConnections(family, member._id, input);
+  if (has(input, 'parentIds') && has(input, 'spouseId')) {
+    member.relationshipsReviewed = true;
+    member.parentMemberId = null;
+  }
+}
+function detailValidators() {
+  return [
+    body('displayName').optional().isString().bail().trim().notEmpty().withMessage('Full name is required').isLength({ max: 120 }),
+    body('dateOfBirth').optional({ values: 'falsy' }).isISO8601({ strict: true }).bail().custom(value => {
+      if (new Date(value) > new Date()) throw new Error('Date of birth cannot be in the future');
+      return true;
+    }),
+    body('gender').optional().isIn(['', 'male', 'female', 'other']),
+    body('phone').optional().isString().bail().trim().isLength({ max: 30 }),
+    body('occupation').optional().isString().bail().trim().isLength({ max: 160 }),
+  ];
+}
+function connectionValidators() {
+  return [
+    body('parentIds').optional().isArray({ max: 2 }).withMessage('Select at most two parents'),
+    body('parentIds.*').isMongoId().withMessage('Invalid parent'),
+    body('parentIds').optional().custom(value => {
+      if (Array.isArray(value) && new Set(value).size !== value.length) throw new Error('Choose two different parents');
+      return true;
+    }),
+    body('spouseId').optional({ values: 'null' }).custom(value => value === '' || mongoose.isValidObjectId(value)).withMessage('Invalid spouse'),
+  ];
+}
+
+const getMyFamily = handle(async (req, res) => {
+  let family = await Family.findOne(owns(req));
+  if (!family) {
+    const memberId = new mongoose.Types.ObjectId();
+    family = await Family.create({
+      name: 'My Family', ownerId: req.user._id, headMemberId: memberId,
+      members: [{
+        _id: memberId, userId: req.user._id, displayName: req.user.name,
+        relationshipToHead: 'self', isHead: true, relationshipsReviewed: true,
+      }],
+      connections: [],
     });
-  });
-  let rootId = headId ? String(headId) : null;
-  if (!rootId) {
-    const head = members.find((m) => m.isHead);
-    if (head) rootId = String(head._id);
   }
-  members.forEach((m) => {
-    const node = byId.get(String(m._id));
-    const pid = m.parentMemberId ? String(m.parentMemberId) : null;
-    if (pid && byId.has(pid)) {
-      byId.get(pid).children.push(node);
-    }
-  });
-  const root = rootId && byId.get(rootId) ? byId.get(rootId) : null;
-  const orphans = [];
-  members.forEach((m) => {
-    const node = byId.get(String(m._id));
-    if (!m.parentMemberId && String(m._id) !== rootId) {
-      orphans.push(node);
-    }
-  });
-  return { root, orphans };
-}
-
-async function getMyFamily(req, res, next) {
-  try {
-    let family = await Family.findOne({ ownerId: req.user._id }).populate(
-      'members.userId',
-      'name email avatar'
-    );
-    if (!family) {
-      family = await Family.create({
-        name: 'My Family',
-        ownerId: req.user._id,
-        members: [
-          {
-            userId: req.user._id,
-            displayName: req.user.name,
-            relationshipToHead: 'self',
-            isHead: true,
-            parentMemberId: null,
-          },
-        ],
-        headMemberId: null,
-      });
-      const m0 = family.members[0];
-      family.headMemberId = m0._id;
-      await family.save();
-      family = await Family.findById(family._id).populate(
-        'members.userId',
-        'name email avatar'
-      );
-    }
-    const plain = family.toObject();
-    const tree = buildTree(plain.members, plain.headMemberId);
-    res.json({ family: plain, tree });
-  } catch (e) {
-    next(e);
-  }
-}
+  await respond(res, family);
+});
 
 const addMemberValidators = [
   body('userId').optional().isMongoId(),
   body('email').optional().isEmail(),
-  body('displayName').optional().trim(),
-  body('dateOfBirth').optional({ values: 'falsy' }).isISO8601(),
-  body('gender').optional().isIn(['', 'male', 'female', 'other']),
-  body('phone').optional().trim(),
-  body('occupation').optional().trim(),
-  body('relationshipToHead').trim().notEmpty(),
-  body('parentMemberId').optional().isMongoId(),
-  body('isHead').optional().isBoolean(),
+  ...detailValidators(),
+  ...connectionValidators(),
+  body('relationshipToHead').optional().isString().bail().trim().isLength({ min: 1, max: 60 }),
+  body('parentMemberId').optional({ values: 'null' }).isMongoId(),
+  body('isHead').optional().isBoolean().toBoolean(),
 ];
 
-async function addMember(req, res, next) {
-  try {
-    const { userId, email, displayName, relationshipToHead, parentMemberId, isHead,
-      dateOfBirth, gender, phone, occupation } =
-      req.body;
-    let targetUser = null;
-    if (userId) {
-      targetUser = await User.findById(userId);
-    } else if (email) {
-      targetUser = await User.findOne({ email: email.toLowerCase() });
-    }
-    if ((userId || email) && !targetUser) {
-      return res.status(404).json({ message: 'User not found — invite them to register first' });
-    }
+const addMember = handle(async (req, res) => {
+  const family = await ownedFamily(req);
+  const input = req.body;
+  let targetUser = null;
+  if (input.userId) targetUser = await User.findById(input.userId);
+  else if (input.email) targetUser = await User.findOne({ email: input.email.toLowerCase() });
+  if ((input.userId || input.email) && !targetUser) fail(404, 'Registered user not found. Add the member without an account, or ask them to register first.');
+  if (!input.displayName?.trim() && !targetUser?.name) fail(400, 'Member name is required');
+  if (targetUser && family.members.some(member => String(member.userId) === String(targetUser._id))) fail(400, 'Member already in family');
+  if (input.parentMemberId && !family.members.id(input.parentMemberId)) fail(400, 'Related family member was not found');
 
-    if (!targetUser && !displayName?.trim()) {
-      return res.status(400).json({ message: 'Member name is required' });
-    }
+  family.members.push({
+    userId: targetUser?._id || null,
+    displayName: input.displayName?.trim() || targetUser?.name,
+    relationshipToHead: input.relationshipToHead || 'member',
+    parentMemberId: input.parentMemberId || null,
+    relationshipsReviewed: has(input, 'parentIds') && has(input, 'spouseId'),
+  });
+  const member = family.members[family.members.length - 1];
+  writeDetails(member, input);
+  writeRelationships(family, member, input);
+  if (input.isHead || !family.headMemberId) changeHead(family, member._id);
+  await family.save();
+  await respond(res, family, 201);
+});
 
-    const family = await Family.findOne({ ownerId: req.user._id });
-    if (!family) return res.status(404).json({ message: 'Family not found' });
-
-    if (parentMemberId && !family.members.id(parentMemberId)) {
-      return res.status(400).json({ message: 'Related family member was not found' });
-    }
-
-    const exists = targetUser && family.members.some(
-      (m) => String(m.userId) === String(targetUser._id)
-    );
-    if (exists) {
-      return res.status(400).json({ message: 'Member already in family' });
-    }
-
-    const member = {
-      userId: targetUser?._id || null,
-      displayName: displayName || targetUser?.name,
-      relationshipToHead,
-      parentMemberId: isHead ? null : (parentMemberId || null),
-      isHead: !!isHead,
-      dateOfBirth: dateOfBirth || null,
-      gender: gender || '',
-      phone: phone || '',
-      occupation: occupation || '',
-    };
-    family.members.push(member);
-    if (isHead) {
-      family.members.forEach((m) => {
-        m.isHead = m === family.members[family.members.length - 1];
-      });
-      family.headMemberId = family.members[family.members.length - 1]._id;
-    }
-    await family.save();
-    const updated = await Family.findById(family._id).populate(
-      'members.userId',
-      'name email avatar'
-    );
-    const plain = updated.toObject();
-    res.json({
-      family: plain,
-      tree: buildTree(plain.members, plain.headMemberId),
-    });
-  } catch (e) {
-    next(e);
-  }
-}
+const updateMemberValidators = [
+  param('memberId').isMongoId(),
+  ...detailValidators(),
+  ...connectionValidators(),
+];
+const updateMember = handle(async (req, res) => {
+  // Account identity, ownership and head status never come from this payload.
+  const allowed = new Set(['displayName', 'dateOfBirth', 'gender', 'phone', 'occupation', 'parentIds', 'spouseId']);
+  if (!Object.keys(req.body).length || Object.keys(req.body).some(key => !allowed.has(key))) fail(400, 'Only member details, parents and spouse can be edited here');
+  const family = await ownedFamily(req);
+  const member = family.members.id(req.params.memberId);
+  if (!member) fail(404, 'Member not found');
+  writeDetails(member, req.body);
+  writeRelationships(family, member, req.body);
+  await family.save();
+  await respond(res, family);
+});
 
 const setHeadValidators = [body('memberId').isMongoId()];
+const setHead = handle(async (req, res) => {
+  const family = await ownedFamily(req);
+  const member = family.members.id(req.body.memberId);
+  if (!member) fail(404, 'Member not found');
+  changeHead(family, member._id);
+  await family.save();
+  await respond(res, family);
+});
 
-async function setHead(req, res, next) {
-  try {
-    const { memberId } = req.body;
-    const family = await Family.findOne({ ownerId: req.user._id });
-    if (!family) return res.status(404).json({ message: 'Family not found' });
-    const m = family.members.id(memberId);
-    if (!m) return res.status(404).json({ message: 'Member not found' });
-    family.members.forEach((x) => {
-      x.isHead = String(x._id) === String(memberId);
-    });
-    m.parentMemberId = null;
-    family.headMemberId = m._id;
-    await family.save();
-    const updated = await Family.findById(family._id).populate(
-      'members.userId',
-      'name email avatar'
-    );
-    const plain = updated.toObject();
-    res.json({
-      family: plain,
-      tree: buildTree(plain.members, plain.headMemberId),
-    });
-  } catch (e) {
-    next(e);
-  }
+const removeMember = handle(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.memberId)) fail(400, 'Invalid member');
+  const family = await ownedFamily(req);
+  const member = family.members.id(req.params.memberId);
+  if (!member) fail(404, 'Member not found');
+  if (String(member.userId) === String(req.user._id)) fail(400, 'Cannot remove yourself');
+  if (member.isHead || String(family.headMemberId) === String(member._id)) fail(400, 'Choose another family head before removing this member');
+  const memberId = String(member._id);
+  family.connections = (family.connections || []).filter(edge => String(edge.fromMemberId) !== memberId && String(edge.toMemberId) !== memberId);
+  // Legacy references may remain unreviewed, but must not point to deleted members.
+  family.members.forEach(other => { if (String(other.parentMemberId) === memberId) other.parentMemberId = null; });
+  member.deleteOne();
+  await family.save();
+  await respond(res, family);
+});
+
+function buildTree(members, headMemberId, connections = []) {
+  return serializeFamily({ toObject: () => ({ members, headMemberId, connections }) }).tree;
 }
-
-async function removeMember(req, res, next) {
-  try {
-    const { memberId } = req.params;
-    const family = await Family.findOne({ ownerId: req.user._id });
-    if (!family) return res.status(404).json({ message: 'Family not found' });
-    const m = family.members.id(memberId);
-    if (!m) return res.status(404).json({ message: 'Member not found' });
-    if (String(m.userId) === String(req.user._id)) {
-      return res.status(400).json({ message: 'Cannot remove yourself' });
-    }
-    if (m.isHead || String(family.headMemberId) === String(memberId)) {
-      return res.status(400).json({ message: 'Choose another family head before removing this member' });
-    }
-    family.members.forEach((member) => {
-      if (String(member.parentMemberId) === String(memberId)) member.parentMemberId = null;
-    });
-    m.deleteOne();
-    await family.save();
-    const updated = await Family.findById(family._id).populate(
-      'members.userId',
-      'name email avatar'
-    );
-    const plain = updated.toObject();
-    res.json({
-      family: plain,
-      tree: buildTree(plain.members, plain.headMemberId),
-    });
-  } catch (e) {
-    next(e);
-  }
-}
-
 module.exports = {
-  getMyFamily,
-  addMember,
-  addMemberValidators,
-  setHead,
-  setHeadValidators,
-  removeMember,
-  buildTree,
+  getMyFamily, addMember, addMemberValidators, updateMember, updateMemberValidators,
+  setHead, setHeadValidators, removeMember, buildTree,
 };
+

@@ -18,6 +18,8 @@ const memberSchema = new mongoose.Schema(
       default: null,
     },
     isHead: { type: Boolean, default: false },
+    // Old "related to" values are not reliable parent/spouse connections.
+    relationshipsReviewed: { type: Boolean, default: false },
   },
   { _id: true }
 );
@@ -32,8 +34,14 @@ const familySchema = new mongoose.Schema(
     },
     headMemberId: { type: mongoose.Schema.Types.ObjectId, default: null },
     members: [memberSchema],
+    connections: [{
+      _id: false,
+      kind: { type: String, enum: ['parent', 'spouse'], required: true },
+      fromMemberId: { type: mongoose.Schema.Types.ObjectId, required: true },
+      toMemberId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    }],
   },
-  { timestamps: true }
+  { timestamps: true, optimisticConcurrency: true }
 );
 
 module.exports = mongoose.model('Family', familySchema);

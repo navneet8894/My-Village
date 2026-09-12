@@ -13,6 +13,8 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const VerifyOtpPage = lazy(() => import('./pages/VerifyOtpPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const TripsPage = lazy(() => import('./pages/TripsPage'));
+const TripDetailPage = lazy(() => import('./pages/TripsPage').then(m => ({ default: m.TripDetailPage })));
 const FamilyPage = lazy(() => import('./pages/FamilyPage'));
 const MapPage = lazy(() => import('./pages/MapPage'));
 const EventsPage = lazy(() => import('./pages/EventsPage'));
@@ -96,6 +98,8 @@ export default function App() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="trips" element={<TripsPage />} />
+        <Route path="trips/:id" element={<TripDetailPage />} />
         <Route path="family" element={<FamilyPage />} />
         <Route path="map" element={<MapPage />} />
         <Route path="events" element={<EventsPage />} />

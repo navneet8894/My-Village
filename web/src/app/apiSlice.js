@@ -12,8 +12,16 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['User', 'Events', 'News', 'Family', 'Notifications', 'Invitations', 'AdminUsers', 'Village'],
+  tagTypes: ['Announcements', 'Trips', 'User', 'Events', 'News', 'Family', 'Notifications', 'Invitations', 'AdminUsers', 'Village'],
   endpoints: (builder) => ({
+    getUnreadCount: builder.query({ query: () => '/notifications/unread-count', providesTags: ['Notifications'] }),
+    getTrips: builder.query({ query: () => '/trips', providesTags: ['Trips'] }),
+    getTrip: builder.query({ query: (id) => `/trips/${id}`, providesTags: ['Trips'] }),
+    getTripParticipants: builder.query({ query: (id) => `/trips/${id}/participants`, providesTags: ['Trips'] }),
+    createTrip: builder.mutation({ query: (body) => ({ url: '/trips', method: 'POST', body }), invalidatesTags: ['Trips', 'Notifications'] }),
+    updateTrip: builder.mutation({ query: ({ id, ...body }) => ({ url: `/trips/${id}`, method: 'PATCH', body }), invalidatesTags: ['Trips', 'Notifications'] }),
+    confirmTrip: builder.mutation({ query: ({ id, additionalFamilyCount }) => ({ url: `/trips/${id}/participation`, method: 'PUT', body: { additionalFamilyCount } }), invalidatesTags: ['Trips'] }),
+    leaveTrip: builder.mutation({ query: (id) => ({ url: `/trips/${id}/participation`, method: 'DELETE' }), invalidatesTags: ['Trips'] }),
     getMapConfig: builder.query({
       query: () => '/public/map-config',
     }),
@@ -51,7 +59,7 @@ export const apiSlice = createApi({
     }),
     joinVillage: builder.mutation({
       query: (body) => ({ url: '/villages/join', method: 'POST', body }),
-      invalidatesTags: ['User', 'Village', 'Events', 'News', 'Invitations'],
+      invalidatesTags: ['User', 'Village', 'Events', 'News', 'Invitations', 'Trips'],
     }),
     createCustomVillage: builder.mutation({
       query: (body) => ({ url: '/villages/custom', method: 'POST', body }),
@@ -92,7 +100,11 @@ export const apiSlice = createApi({
     }),
     addFamilyMember: builder.mutation({
       query: (body) => ({ url: '/family/members', method: 'POST', body }),
-      invalidatesTags: ['Family'],
+      invalidatesTags: ['Family', 'AdminUsers', 'Village'],
+    }),
+    updateFamilyMember: builder.mutation({
+      query: ({ memberId, ...body }) => ({ url: `/family/members/${memberId}`, method: 'PATCH', body }),
+      invalidatesTags: ['Family', 'AdminUsers', 'Village'],
     }),
     setFamilyHead: builder.mutation({
       query: (body) => ({ url: '/family/head', method: 'POST', body }),
@@ -100,7 +112,7 @@ export const apiSlice = createApi({
     }),
     removeFamilyMember: builder.mutation({
       query: (id) => ({ url: `/family/members/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Family'],
+      invalidatesTags: ['Family', 'AdminUsers', 'Village'],
     }),
     getEvents: builder.query({
       query: () => '/events',
@@ -183,9 +195,11 @@ export const apiSlice = createApi({
     }),
     adminAnnouncements: builder.query({
       query: () => '/admin/announcements',
+      providesTags: ['Announcements'],
     }),
     adminPostAnnouncement: builder.mutation({
       query: (body) => ({ url: '/admin/announcements', method: 'POST', body }),
+      invalidatesTags: ['Announcements', 'Notifications'],
     }),
     adminEmergency: builder.mutation({
       query: (body) => ({ url: '/admin/emergency', method: 'POST', body }),
@@ -206,6 +220,9 @@ export const apiSlice = createApi({
 });
 
 export const {
+  useGetUnreadCountQuery,
+  useGetTripsQuery, useGetTripQuery, useGetTripParticipantsQuery,
+  useCreateTripMutation, useUpdateTripMutation, useConfirmTripMutation, useLeaveTripMutation,
   useGetMapConfigQuery,
   useGetCountriesQuery,
   useGetStatesQuery,
@@ -226,6 +243,7 @@ export const {
   useUpdateMeMutation,
   useGetFamilyQuery,
   useAddFamilyMemberMutation,
+  useUpdateFamilyMemberMutation,
   useSetFamilyHeadMutation,
   useRemoveFamilyMemberMutation,
   useGetEventsQuery,

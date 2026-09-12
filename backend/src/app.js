@@ -49,6 +49,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/family', familyRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/trips', require('./routes/tripRoutes'));
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/notifications', notificationRoutes);

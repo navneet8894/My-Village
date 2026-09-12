@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAdminVillagesQuery } from '../app/apiSlice';
 
 export default function AdminVillagesPage() {
-  const { data: villages, isLoading } = useAdminVillagesQuery();
+  const { data: villages, isLoading } = useAdminVillagesQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: 30000 });
 
   if (isLoading) return <p className="text-text-subtle">Loading villages…</p>;
 
@@ -32,7 +32,7 @@ export default function AdminVillagesPage() {
             <p className="text-xs text-text-subtle">{v.country}</p>
             <div className="mt-4 flex gap-4 text-sm">
               <span>
-                <strong>{v.userCount}</strong> users
+                <strong>{v.totalVillagers ?? '—'}</strong> villagers
               </span>
               <span>
                 <strong>{v.postCount}</strong> posts

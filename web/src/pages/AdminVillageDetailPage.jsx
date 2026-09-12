@@ -6,7 +6,7 @@ import VillageMap from '../components/VillageMap';
 
 export default function AdminVillageDetailPage() {
   const { id } = useParams();
-  const { data, isLoading, refetch } = useAdminVillageDetailQuery(id);
+  const { data, isLoading, refetch } = useAdminVillageDetailQuery(id, { refetchOnMountOrArgChange: true, pollingInterval: 30000 });
   const [updateLocation, { isLoading: isSaving }] = useAdminUpdateVillageLocationMutation();
   const [center, setCenter] = useState({ lat: 20.5937, lng: 78.9629 });
   useEffect(() => { if (data?.village) { const lat = Number(data.village.lat); const lng = Number(data.village.lng); if (Number.isFinite(lat) && Number.isFinite(lng)) setCenter({ lat, lng }); } }, [data?.village]);
@@ -38,6 +38,7 @@ export default function AdminVillageDetailPage() {
       </section>
 
       <section>
+        <p className="mb-4 text-sm text-text-muted"><strong className="text-text">Total villagers: {data.population?.totalVillagers ?? '—'}</strong><span className="ms-2">({data.population?.userCount ?? '—'} registered users + {data.population?.additionalFamilyMembers ?? '—'} additional family members)</span></p>
         <h2 className="font-semibold text-lg mb-3">Users ({users?.length || 0})</h2>
         <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {(users || []).map((u) => (

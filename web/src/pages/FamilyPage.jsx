@@ -1,73 +1,114 @@
-import { useState } from 'react';
+﻿import { useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { useSelector } from 'react-redux';
-import { useGetFamilyQuery, useAddFamilyMemberMutation, useSetFamilyHeadMutation, useRemoveFamilyMemberMutation } from '../app/apiSlice';
+import { apiSlice, useGetFamilyQuery, useSetFamilyHeadMutation, useRemoveFamilyMemberMutation } from '../app/apiSlice';
+import { Button } from '../shared/ui';
+import FamilyTreeCanvas, { MemberAvatar } from '../components/FamilyTreeCanvas';
+import FamilyMemberEditor, { FamilyDialog } from '../components/FamilyMemberEditor';
+import { connectedFamily, familyMembers, layoutFamily, relationToHead } from '../utils/familyTree';
+import '../styles/family-tree.css';
 
-const relations = [
-  ['spouse', 'Spouse'], ['son', 'Son'], ['daughter', 'Daughter'], ['father', 'Father'],
-  ['mother', 'Mother'], ['brother', 'Brother'], ['sister', 'Sister'],
-  ['grandfather', 'Grandfather'], ['grandmother', 'Grandmother'], ['grandson', 'Grandson'],
-  ['granddaughter', 'Granddaughter'], ['other', 'Other'],
-];
-const relationLabel = (value) => relations.find(([key]) => key === value)?.[1] || (value === 'self' ? 'Self' : value || 'Member');
-
-function PersonCard({ node }) {
-  const initials = node.displayName?.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
-  return <div className={`family-person ${node.isHead ? 'family-head' : ''}`}>
-    <span className="family-avatar">{initials}</span>
-    <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-bold">{node.displayName}</h3>{node.isHead && <span className="head-badge">Family Head</span>}</div><p className="mt-0.5 text-xs font-medium capitalize text-[#c46645] dark:text-primary-text">{relationLabel(node.relationshipToHead)}</p>{(node.occupation || node.phone) && <p className="mt-1 truncate text-[11px] text-text-subtle">{[node.occupation, node.phone].filter(Boolean).join(' · ')}</p>}</div>
-  </div>;
-}
-
-function TreeBranch({ node }) {
-  if (!node) return null;
-  return <li className="family-branch"><PersonCard node={node} />{node.children?.length > 0 && <ul className="family-children">{node.children.map((child) => <TreeBranch key={child.id} node={child} />)}</ul>}</li>;
-}
-
-function AddMemberForm({ members, onDone }) {
-  const [form, setForm] = useState({ displayName: '', email: '', dateOfBirth: '', gender: '', phone: '', occupation: '', relationshipToHead: 'son', parentMemberId: '', isHead: false });
-  const [addMember, { isLoading }] = useAddFamilyMemberMutation();
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  async function onSubmit(e) {
-    e.preventDefault();
-    if (!form.isHead && !form.parentMemberId) return toast.error('Please select who this member is related to');
-    try {
-      await addMember({ ...form, email: form.email || undefined, dateOfBirth: form.dateOfBirth || undefined, parentMemberId: form.isHead ? undefined : form.parentMemberId }).unwrap();
-      toast.success(form.isHead ? 'Member added as family head' : 'Family member added');
-      setForm({ displayName: '', email: '', dateOfBirth: '', gender: '', phone: '', occupation: '', relationshipToHead: 'son', parentMemberId: '', isHead: false });
-      onDone();
-    } catch (err) { toast.error(err?.data?.message || 'Could not add family member'); }
-  }
-  return <form onSubmit={onSubmit} className="village-panel p-5 sm:p-6">
-    <div><h2 className="village-display text-2xl">Add Family Member</h2><p className="mt-1 text-xs text-text-subtle">Add their details and connect them to someone already in your family.</p></div>
-    <div className="mt-5 grid gap-4 sm:grid-cols-2">
-      <label className="family-field"><span>Full name *</span><input required className="theme-input" placeholder="e.g. Raj Kumar" value={form.displayName} onChange={(e) => update('displayName', e.target.value)} /></label>
-      <label className="family-field"><span>Registered email</span><input type="email" className="theme-input" placeholder="Optional" value={form.email} onChange={(e) => update('email', e.target.value)} /></label>
-      <label className="family-field"><span>Relation *</span><select className="theme-input capitalize" value={form.relationshipToHead} onChange={(e) => update('relationshipToHead', e.target.value)}>{relations.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-      <label className="family-field"><span>Related to *</span><select disabled={form.isHead} required={!form.isHead} className="theme-input" value={form.parentMemberId} onChange={(e) => update('parentMemberId', e.target.value)}><option value="">Select family member</option>{members.map((m) => <option value={m._id} key={m._id}>{m.displayName}</option>)}</select></label>
-      <label className="family-field"><span>Date of birth</span><input type="date" className="theme-input" value={form.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} /></label>
-      <label className="family-field"><span>Gender</span><select className="theme-input" value={form.gender} onChange={(e) => update('gender', e.target.value)}><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></label>
-      <label className="family-field"><span>Phone</span><input className="theme-input" placeholder="Optional" value={form.phone} onChange={(e) => update('phone', e.target.value)} /></label>
-      <label className="family-field"><span>Occupation</span><input className="theme-input" placeholder="Optional" value={form.occupation} onChange={(e) => update('occupation', e.target.value)} /></label>
+function MemberDetails({ member, members, onClose, onEdit, onLink }) {
+  const name = id => members.find(person => person.id === id)?.displayName || 'Not selected';
+  const children = members.filter(person => person.parentIds.includes(member.id));
+  const details = [
+    ['Date of birth', member.dateOfBirth ? new Date(member.dateOfBirth).toLocaleDateString('en-IN', { timeZone: 'UTC' }) : 'Not specified'],
+    ['Gender', member.gender || 'Not specified'],
+    ['Phone', member.phone || 'Not specified'],
+    ['Occupation', member.occupation || 'Not specified'],
+    ['Linked account email', member.userId?.email || 'No registered account linked'],
+    ['Parents', member.parentIds.length ? member.parentIds.map(name).join(' · ') : 'Not selected'],
+    ['Spouse / partner', member.spouseId ? name(member.spouseId) : 'Not selected'],
+    ['Children', children.length ? children.map(person => person.displayName).join(' · ') : 'No children linked'],
+  ];
+  return <FamilyDialog title="Member details" onClose={onClose}>
+    <div className="ft-dialog-body">
+      <div className="mb-6 flex items-center gap-4"><MemberAvatar member={member} /><div><h3 translate="no" className="break-words text-xl font-bold">{member.displayName}</h3>{member.isHead && <p className="mt-1 text-xs font-semibold text-primary-text">Family head</p>}</div></div>
+      <dl className="grid gap-5 sm:grid-cols-2">{details.map(([label, value]) => <div key={label}><dt className="text-xs text-text-subtle">{label}</dt><dd className="mt-1 break-words text-sm font-medium" translate="no">{value}</dd></div>)}</dl>
     </div>
-    <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#eadfd4] bg-[#fffaf4] p-4 dark:border-line dark:bg-soft"><input type="checkbox" className="mt-1 h-4 w-4 accent-[#df6744]" checked={form.isHead} onChange={(e) => update('isHead', e.target.checked)} /><span><b className="block text-sm">Make this person family head</b><small className="text-text-subtle">Only one head is allowed. This will replace the current family head.</small></span></label>
-    <button disabled={isLoading} className="mt-5 rounded-xl bg-[#df6744] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#ca5536] disabled:opacity-60">{isLoading ? 'Adding…' : 'Add member'}</button>
-  </form>;
+    <div className="ft-dialog-footer"><Button variant="secondary" onClick={() => onLink(member)}>Link family</Button><Button onClick={() => onEdit(member)}>Edit details</Button></div>
+  </FamilyDialog>;
 }
 
 export default function FamilyPage() {
-  const currentUser = useSelector((s) => s.auth.user);
-  const { data, isLoading, refetch } = useGetFamilyQuery();
-  const [setHead, { isLoading: changingHead }] = useSetFamilyHeadMutation();
-  const [removeMember] = useRemoveFamilyMemberMutation();
-  if (isLoading) return <div className="py-20 text-center text-text-subtle">Loading family…</div>;
-  const members = data?.family?.members || [];
-  const tree = data?.tree;
-  const changeHead = async (memberId) => { try { await setHead({ memberId }).unwrap(); toast.success('Family head updated'); refetch(); } catch (err) { toast.error(err?.data?.message || 'Could not change family head'); } };
-  const remove = async (memberId) => { if (!window.confirm('Remove this person from your family?')) return; try { await removeMember(memberId).unwrap(); toast.success('Member removed'); refetch(); } catch (err) { toast.error(err?.data?.message || 'Cannot remove member'); } };
-  return <div className="family-page">
-    <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#dc704f]">My family</p><h1 className="village-display mt-1 text-4xl">Family Tree</h1><p className="mt-2 max-w-2xl text-sm text-text-subtle">Add relations, connect each person to a family member and choose one person as the head of the family.</p></div>
-    <section className="village-panel mt-7 overflow-x-auto p-5 sm:p-7"><div className="mb-6 flex items-center justify-between"><h2 className="font-bold">Family structure</h2><span className="rounded-full bg-[#eaf1ec] px-3 py-1 text-xs font-bold text-[#42634f]">{members.length} {members.length === 1 ? 'member' : 'members'}</span></div>{tree?.root ? <ul className="family-tree"><TreeBranch node={tree.root} /></ul> : <p className="py-10 text-center text-text-subtle">No family head selected.</p>}{tree?.orphans?.length > 0 && <div className="mt-8 border-t border-line pt-5"><p className="mb-3 text-xs font-bold uppercase tracking-wider text-text-subtle">Unlinked members</p><div className="grid gap-3 md:grid-cols-2">{tree.orphans.map((node) => <PersonCard node={node} key={node.id} />)}</div></div>}</section>
-    <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(310px,.7fr)]"><AddMemberForm members={members} onDone={refetch} /><section className="village-panel p-5"><h2 className="village-display text-2xl">Manage Members</h2><p className="mt-1 text-xs text-text-subtle">Change the head or remove a member.</p><div className="mt-5 space-y-3">{members.map((m) => <div className="rounded-2xl border border-[#eee5dc] p-3 dark:border-line" key={m._id}><div className="flex items-center gap-3"><span className="family-avatar">{m.displayName?.charAt(0)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{m.displayName}</p><p className="text-[11px] capitalize text-text-subtle">{relationLabel(m.relationshipToHead)}{m.isHead ? ' · Family head' : ''}</p></div></div><div className="mt-3 flex justify-end gap-3 border-t border-line pt-2">{!m.isHead && <button disabled={changingHead} className="text-xs font-bold text-[#397057] disabled:opacity-50" onClick={() => changeHead(m._id)}>Make head</button>}{!m.isHead && String(m.userId?._id || m.userId) !== String(currentUser?._id) && <button className="text-xs font-bold text-danger" onClick={() => remove(m._id)}>Remove</button>}</div></div>)}</div></section></div>
+  const currentUser = useSelector(state => state.auth.user);
+  const dispatch = useDispatch();
+  const query = useGetFamilyQuery();
+  const [setHead, settingHead] = useSetFamilyHeadMutation();
+  const [removeMember, removing] = useRemoveFamilyMemberMutation();
+  const [view, setView] = useState('tree');
+  const [search, setSearch] = useState('');
+  const [editor, setEditor] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const [removeId, setRemoveId] = useState(null);
+  const [actionError, setActionError] = useState('');
+  const actionLock = useRef(false);
+  const busy = settingHead.isLoading || removing.isLoading;
+  const members = useMemo(() => familyMembers(query.data?.family), [query.data?.family]);
+  const head = members.find(member => member.isHead);
+  const connected = useMemo(() => connectedFamily(members, head?.id), [members, head?.id]);
+  const generationCount = useMemo(() => layoutFamily(members).generations, [members]);
+  const needingHelp = members.filter(member => member.needsRelationshipReview || (members.length > 1 && !connected.has(member.id)));
+  const detailedMember = members.find(member => member.id === detailId);
+  const removingMember = members.find(member => member.id === removeId);
+  const filtered = members.filter(member => member.displayName?.toLowerCase().includes(search.toLowerCase()));
+
+  function edit(member, tab = 'details') {
+    setDetailId(null);
+    setEditor({ member, tab });
+  }
+  async function updateHead(member) {
+    if (actionLock.current) return;
+    actionLock.current = true;
+    try {
+      const result = await setHead({ memberId: member.id }).unwrap();
+      await dispatch(apiSlice.util.upsertQueryData('getFamily', undefined, result));
+      toast.success('Family head updated. Relationships kept unchanged.');
+    } catch (error) { toast.error(error?.data?.message || 'Could not change family head'); }
+    finally { actionLock.current = false; }
+  }
+  async function remove() {
+    if (actionLock.current || !removeId) return;
+    actionLock.current = true; setActionError('');
+    try {
+      const result = await removeMember(removeId).unwrap();
+      await dispatch(apiSlice.util.upsertQueryData('getFamily', undefined, result));
+      setRemoveId(null); toast.success('Member removed. Other family members have been kept.');
+    } catch (error) { setActionError(error?.data?.message || 'Could not remove this member'); }
+    finally { actionLock.current = false; }
+  }
+
+  if (query.isLoading) return <div className="village-panel p-10 text-center text-text-subtle" role="status">Loading your family…</div>;
+  if (query.isError) return <div className="village-panel p-8"><h1 className="text-xl font-bold">Could not load your family</h1><p className="my-4 text-text-muted">{query.error?.data?.message || 'Please try again.'}</p><Button onClick={query.refetch}>Retry</Button></div>;
+
+  return <div className="ft-page">
+    <header className="ft-intro">
+      <div><p className="ft-eyebrow">Our roots. Our people.</p><h1 className="village-display text-4xl sm:text-5xl">My Family Tree</h1><p className="mt-3 max-w-xl text-sm leading-relaxed text-text-muted">Every generation has a story. Bring yours together, one connection at a time.</p>
+        <div className="ft-stats"><span><b>{members.length}</b>Members</span><span><b>{generationCount}</b>Generations</span><span><b>{needingHelp.length}</b>To connect / review</span></div>
+      </div>
+      <Button className="min-h-11" onClick={() => setEditor({ member: null, tab: 'details' })}>+ Add family member</Button>
+    </header>
+
+    {needingHelp.length > 0 && <section className="ft-notice">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold">Connect your family members</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">Choose <b>Link family</b> beside a name, select that person's parents or spouse, and save. The tree will connect them automatically.</p><p className="mt-2 text-xs text-text-subtle">For a child, select their parents. For a couple, select the spouse on either person. Add missing people first.</p></div></div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">{needingHelp.map(member => <div key={member.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-card p-3"><div className="min-w-0"><p className="break-words text-sm font-bold" translate="no">{member.displayName}</p><p className="mt-1 text-xs text-text-subtle">{member.needsRelationshipReview ? 'Relationship needs review' : 'Not connected to the head’s branch'}</p></div><Button variant="secondary" onClick={() => edit(member, 'relationships')}>Link family →</Button></div>)}</div>
+    </section>}
+
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="ft-view-tabs" aria-label="Family view"><button aria-pressed={view === 'tree'} onClick={() => setView('tree')}>Family tree</button><button aria-pressed={view === 'list'} onClick={() => setView('list')}>Member list</button></div>
+      <span className="text-xs text-text-subtle" role="status">{query.isFetching ? 'Updating family…' : 'Your family details are private to your account'}</span>
+    </div>
+    {view === 'tree' ? <FamilyTreeCanvas members={members} head={head} onDetails={member => setDetailId(member.id)} onEdit={member => edit(member)} onLink={member => edit(member, 'relationships')} /> : <section className="village-panel p-5 sm:p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Manage family members</h2><input aria-label="Search family members" className="theme-input sm:max-w-xs" placeholder="Search by name…" value={search} onChange={event => setSearch(event.target.value)} /></div>
+      <div className="space-y-3">{filtered.map(member => <article className="ft-member-row" key={member.id}>
+        <div className="flex min-w-0 items-center gap-3"><MemberAvatar member={member} /><div className="min-w-0"><button onClick={() => setDetailId(member.id)} className="break-words text-start text-sm font-bold" translate="no">{member.displayName}</button><p className="mt-1 text-xs text-text-subtle">{relationToHead(member, head, members)}</p></div></div>
+        <div className="ft-member-row-actions"><Button variant="secondary" onClick={() => edit(member)}>Edit details</Button><Button variant="secondary" onClick={() => edit(member, 'relationships')}>Link family</Button>{!member.isHead && <Button disabled={busy} variant="ghost" onClick={() => updateHead(member)}>Make head</Button>}{!member.isHead && String(member.userId?._id || member.userId) !== String(currentUser?._id) && <Button variant="danger" disabled={busy} onClick={() => { setActionError(''); setRemoveId(member.id); }}>Remove</Button>}</div>
+      </article>)}</div>{!filtered.length && <p className="py-8 text-center text-text-subtle">No matching members.</p>}
+    </section>}
+    {view === 'tree' && <p className="text-xs text-text-subtle">Use <b>Member list</b> to change the family head or remove a member. Every tree card also has Edit details and Link family.</p>}
+
+    {editor && <FamilyMemberEditor key={editor.member?.id || 'new'} member={editor.member} members={members} initialTab={editor.tab} onClose={() => setEditor(null)} />}
+    {detailedMember && !editor && <MemberDetails member={detailedMember} members={members} onClose={() => setDetailId(null)} onEdit={member => edit(member)} onLink={member => edit(member, 'relationships')} />}
+    {removingMember && <FamilyDialog title="Remove family member?" busy={busy} onClose={() => setRemoveId(null)}><div className="ft-dialog-body"><p>Remove <b translate="no">{removingMember.displayName}</b> and their connections? Their children and all other family members will remain in your family.</p>{actionError && <p role="alert" className="mt-4 text-danger">{actionError}</p>}</div><div className="ft-dialog-footer"><Button variant="secondary" disabled={busy} onClick={() => setRemoveId(null)}>Keep member</Button><Button variant="danger" disabled={busy} onClick={remove}>{busy ? 'Removing…' : 'Remove member'}</Button></div></FamilyDialog>}
   </div>;
 }
+

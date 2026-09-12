@@ -68,7 +68,7 @@ async function sendPushToAllUsers(title, body, data = {}, { excludeBanned } = { 
 
 async function notifyUser(userId, title, body, type, data = {}) {
   await saveInAppNotification(userId, title, body, type, data);
-  await sendPushToUser(userId, title, body, data);
+  return sendPushToUser(userId, title, body, { type, ...data });
 }
 
 async function notifyAllVillagers(title, body, type, data = {}, villageId = null) {
@@ -89,16 +89,19 @@ async function notifyAllVillagers(title, body, type, data = {}, villageId = null
   if (!tokens.length) return;
 
   const chunkSize = 500;
+  let failureCount = 0;
   for (let i = 0; i < tokens.length; i += chunkSize) {
     const batch = tokens.slice(i, i + chunkSize);
-    await messaging.sendEachForMulticast({
+    const result = await messaging.sendEachForMulticast({
       notification: { title, body },
       data: Object.fromEntries(
         Object.entries({ type, ...data }).map(([k, v]) => [k, String(v ?? '')])
       ),
       tokens: batch,
     });
+    failureCount += result.failureCount;
   }
+  return { failureCount };
 }
 
 module.exports = {

@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const controller = require('../controllers/tripController');
+router.use(require('../middleware/auth').authRequired);
+router.get('/', controller.list);
+router.post('/', controller.create);
+router.get('/:id', controller.get);
+router.patch('/:id', controller.update);
+router.put('/:id/participation', controller.participate);
+router.delete('/:id/participation', controller.leave);
+router.get('/:id/participants', controller.participants);
+module.exports = router;

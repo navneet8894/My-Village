@@ -2,6 +2,17 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const translations = {
   hi: {
+    'Dashboard': 'डैशबोर्ड', 'My Family': 'मेरा परिवार', 'Village Map': 'गाँव का नक्शा',
+    'Functions': 'कार्यक्रम', 'Village Trips': 'गाँव की यात्राएँ', 'Trips': 'यात्राएँ',
+    'More +': 'और +', 'More −': 'और −', 'Upcoming Trips': 'आगामी यात्राएँ',
+    'Upcoming Functions': 'आगामी कार्यक्रम', 'Latest Village News': 'गाँव की ताज़ा खबरें',
+    '+ Plan a Trip': '+ यात्रा की योजना', 'Main chalunga': 'मैं चलूँगा', 'View details →': 'विवरण देखें →',
+    'Confirm your participation': 'अपना जाना पक्का करें', 'Aap: 1': 'आप: 1',
+    'Saath jaane wale family members': 'साथ जाने वाले परिवार के सदस्य', 'Confirm': 'पुष्टि करें',
+    'Cancel my confirmation': 'मेरी पुष्टि रद्द करें', 'Edit trip': 'यात्रा बदलें', 'Cancel trip': 'यात्रा रद्द करें',
+    'Upcoming': 'आगामी', 'My confirmations': 'मेरी पुष्टि', 'All trips': 'सभी यात्राएँ',
+    'Plan a village trip': 'गाँव की यात्रा की योजना', 'Publish trip': 'यात्रा प्रकाशित करें',
+    'Save changes': 'बदलाव सहेजें', 'Confirmed participants': 'जाने वाले सदस्य',
     'About': 'हमारे बारे में', 'Features': 'सुविधाएँ', 'Mobile App': 'मोबाइल ऐप', 'Log in': 'लॉग इन', 'Sign up': 'रजिस्टर करें',
     'Sign in': 'साइन इन', 'Email': 'ईमेल', 'Password': 'पासवर्ड', 'Forgot password?': 'पासवर्ड भूल गए?', 'No account?': 'खाता नहीं है?', 'Register': 'रजिस्टर करें', 'Back to home': 'होम पर वापस',
     'Create account': 'खाता बनाएँ', 'Name': 'नाम', 'Phone': 'फ़ोन', 'Continue': 'आगे बढ़ें', 'Back to login': 'लॉगिन पर वापस', 'Reset password': 'पासवर्ड रीसेट करें', 'New password': 'नया पासवर्ड', 'Confirm password': 'पासवर्ड की पुष्टि करें', 'Send reset code': 'रीसेट कोड भेजें', 'Resetting…': 'रीसेट हो रहा है…', 'Resend code': 'कोड दोबारा भेजें', 'Back to sign in': 'साइन इन पर वापस',

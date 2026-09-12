@@ -23,4 +23,9 @@ async function markRead(req, res, next) {
   }
 }
 
-module.exports = { listMyNotifications, markRead };
+async function unreadCount(req, res, next) {
+  try { res.json({ count: await Notification.countDocuments({ userId: req.user._id, read: false }) }); }
+  catch (e) { next(e); }
+}
+
+module.exports = { listMyNotifications, markRead, unreadCount };

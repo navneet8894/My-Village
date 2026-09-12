@@ -1,0 +1,8 @@
+.community-shell { --color-app: 255 250 242; --color-primary: 36 92 67; --color-primary-hover: 27 72 52; --color-primary-soft: 226 238 228; --color-primary-muted: 235 243 235; --color-primary-text: 36 92 67; --color-primary-contrast: 255 255 255; --color-line: 231 224 214; --color-text: 48 43 36; --color-text-muted: 103 96 84; --color-text-subtle: 111 103 91; --color-soft: 247 241 232; }
+.dark .community-shell { --color-app: 14 25 21; --color-card: 23 37 31; --color-surface: 23 37 31; --color-primary: 127 198 157; --color-primary-hover: 157 220 184; --color-primary-soft: 32 65 47; --color-primary-muted: 27 54 40; --color-primary-text: 165 222 186; --color-primary-contrast: 14 25 21; --color-line: 48 67 56; --color-text: 241 243 232; --color-text-muted: 200 209 196; --color-text-subtle: 166 181 164; --color-soft: 30 46 36; }
+.community-shell .village-panel { border: 1px solid rgb(var(--color-line)); border-radius: 24px; background: rgb(var(--color-card)); box-shadow: 0 3px 14px #302b2403; }
+.village-eyebrow { color: #b44d2c; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.dark .village-eyebrow { color: #edaa8e; }
+.community-shell :is(button, a, input, select, textarea):focus-visible { outline: 2px solid rgb(var(--color-primary)); outline-offset: 3px; }
+.village-dialog { max-height: 85dvh; overflow-y: auto; }
+.community-shell input, .community-shell select, .community-shell textarea { min-width: 0; }
